@@ -4,36 +4,41 @@
 > 本機: `006-Tools\L1R-Viewer`  
 > 更新: 2026-07-25
 
+## 現行權威計畫
+
+| 計畫 | 路徑 | 用途 |
+|---|---|---|
+| **v2 Goal（現行）** | `docs/plans/L1R-Viewer-Goal-執行計畫-操作者友善-v2.md` | **操作者友善 + GUI 整併**；從 Phase 7 起執行 |
+| v1 整併 | `docs/plans/L1R-Viewer-整併執行計畫.md` | Core→CLI→MCP 歷史規格（0–6 多已完成） |
+
 ## 狀態總表
+
+### v1（0–6）
 
 | Phase | 說明 | 狀態 |
 |---|---|---|
-| 0 | Solution 骨架 + 引擎統一 | ✅ |
-| 1 | 統一 CLI `l1r` + headless render | ✅ |
-| 2 | Python MCP 接上新 CLI | ✅ smoke PASS |
-| 3 | 解碼一致性驗證 | 🟡 已記錄差異（非 diff=0，不阻塞） |
-| 4 | 地圖 GUI 唯讀 gate | ✅ 工具列/存檔/EnsureWritable 加深 |
-| 5 | PakBrowser 唯讀 gate | ✅ 刪除/寫回需 `--enable-edit` |
-| 6 | 改名/品牌/文件/launcher | ✅ README/docs/Launch script/產品標題 |
+| 0–2 | 骨架 / CLI / MCP | ✅ |
+| 3 | 解碼 parity | 🟡 已記錄 |
+| 4–5 | 唯讀 gate | ✅ |
+| 6 | 品牌/文件/CI | ✅ |
+
+### v2（7–13）— 待執行
+
+| Phase | 說明 | 狀態 |
+|---|---|---|
+| 7 | 設定、路徑驗證、doctor、5 分鐘上手 | ⬜ |
+| 8 | 單一 Shell 入口 | ⬜ |
+| 9 | 地圖 GUI UX 整併 | ⬜ |
+| 10 | 資產 GUI UX 整併 | ⬜ |
+| 11 | GUI⇄CLI⇄MCP 對齊 | ⬜ |
+| 12 | 品牌/exe/可攜發布 | ⬜ |
+| 13 | 品質回歸 | ⬜ |
 
 ## GitHub
 
 - Remote: `https://github.com/enoslo19901130/L1R-Viewer.git`
-- Branch: `main`（每階段 commit + push）
-- Owner 已授權同步上傳
+- 每 Phase：commit + push `main`
 
-## 驗證指令
+## 時間序
 
-```powershell
-dotnet build L1R-Viewer.slnx -c Release
-.\l1r.ps1 map render "<client>\map\53" .\tests\out\map-53.png
-python .\mcp\smoke_test.py --map-id 53 --id 167
-.\Launch-L1R-Viewer.ps1 help
-```
-
-## 續作建議（補充項）
-
-1. CI: GitHub Actions `dotnet build` + Python syntax check
-2. `spr export --scale classic` 對齊舊 headless 尺寸後再 parity
-3. 更多 MapViewer 編輯對話框入口掃描
-4. 可選：exe 改名為 `l1r-mapviewer.exe` / `l1r-pakbrowser.exe`（需同步 launcher）
+- 2026-07-25：提交 **Goal 執行計畫 v2（操作者友善）**，尚未開工 Phase 7。

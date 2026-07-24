@@ -60,11 +60,10 @@ Register via `.mcp.json` (`l1r-viewer`). Tools are **read-only** (no fix/import/
 
 ## Docs
 
-- `docs/cli.md` — command reference
-- `docs/mcp.md` — MCP tool list
-- `docs/HEADLESS.md` — agent / headless notes
-- `docs/decoder-parity-report.md` — old vs new sprite decoder notes
-- `docs/plans/` — execution plan + live progress
+- **`docs/plans/L1R-Viewer-Goal-執行計畫-操作者友善-v2.md`** — **現行 Goal 規格**（操作者友善、GUI 整併、Phase 7–13）
+- `docs/plans/L1R-Viewer-執行進度.md` — live 進度
+- `docs/cli.md` / `docs/mcp.md` / `docs/HEADLESS.md` — 進階與 Agent
+- `docs/decoder-parity-report.md` — 解碼對照
 
 ## Rules
 
