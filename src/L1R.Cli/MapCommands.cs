@@ -22,6 +22,7 @@ namespace PakViewer.Cli
             {
                 "info" => Info(subArgs),
                 "tiles" => Tiles(subArgs),
+                "regions" => Regions(subArgs),
                 "--help" or "-h" => PrintUsageOk(),
                 _ => Unknown(command)
             };
@@ -83,6 +84,56 @@ namespace PakViewer.Cli
             return 0;
         }
 
+        /// <summary>
+        /// List MarketRegion / TeleportOk / fishing region files for a map folder.
+        /// Usage: map regions &lt;mapDir|client map id path&gt; [--json]
+        /// </summary>
+        static int Regions(string[] args)
+        {
+            if (args.Length < 1)
+            {
+                Console.Error.WriteLine("Usage: pakviewer-cli map regions <map-folder> [--json]");
+                return 1;
+            }
+
+            string mapDir = args[0];
+            bool json = args.Any(a => a.Equals("--json", StringComparison.OrdinalIgnoreCase));
+            if (!Directory.Exists(mapDir))
+            {
+                Console.Error.WriteLine($"Directory not found: {mapDir}");
+                return 1;
+            }
+
+            var market = Directory.GetFiles(mapDir, "*.MarketRegion").Select(Path.GetFileName).OrderBy(n => n).ToArray();
+            var teleport = Directory.GetFiles(mapDir, "*.TeleportOkRegion").Select(Path.GetFileName).OrderBy(n => n).ToArray();
+            var fishing = Directory.GetFiles(mapDir, "*.fishingRegion").Select(Path.GetFileName).OrderBy(n => n).ToArray();
+
+            if (json)
+            {
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    ok = true,
+                    command = "map.regions",
+                    map_dir = Path.GetFullPath(mapDir),
+                    market,
+                    teleport_ok = teleport,
+                    fishing,
+                    counts = new { market = market.Length, teleport_ok = teleport.Length, fishing = fishing.Length }
+                }));
+            }
+            else
+            {
+                Console.WriteLine($"Map dir: {mapDir}");
+                Console.WriteLine($"MarketRegion: {market.Length}");
+                foreach (var f in market) Console.WriteLine($"  {f}");
+                Console.WriteLine($"TeleportOkRegion: {teleport.Length}");
+                foreach (var f in teleport) Console.WriteLine($"  {f}");
+                Console.WriteLine($"fishingRegion: {fishing.Length}");
+                foreach (var f in fishing) Console.WriteLine($"  {f}");
+            }
+            return 0;
+        }
+
         static void PrintUsage()
         {
             Console.WriteLine("S32/SEG map file operations");
@@ -92,6 +143,7 @@ namespace PakViewer.Cli
             Console.WriteLine("Commands:");
             Console.WriteLine("  info <s32|seg>                                  Show map metadata");
             Console.WriteLine("  tiles <s32|seg>                                 List used tiles");
+            Console.WriteLine("  regions <map-folder> [--json]                   List region side-car files");
         }
 
         static int PrintUsageOk() { PrintUsage(); return 0; }

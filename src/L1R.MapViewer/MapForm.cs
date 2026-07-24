@@ -546,6 +546,7 @@ namespace L1FlyMapViewer
         /// </summary>
         private Eto.Forms.TabPage _leftTabMap;
         private Eto.Forms.TabPage _leftTabS32;
+        private Eto.Forms.TabPage _leftTabInfo;
 
         /// <summary>
         /// 創建自繪圖層面板
@@ -687,6 +688,18 @@ namespace L1FlyMapViewer
             _leftTabS32 = new Eto.Forms.TabPage { Text = LocalizationManager.L("Tab_S32Files"), Content = s32FilesLayout };
             leftTabs.Pages.Add(_leftTabMap);
             leftTabs.Pages.Add(_leftTabS32);
+            // 操作者資訊：傳送點 / 區域（Phase 9）
+            _leftTabInfo = new Eto.Forms.TabPage
+            {
+                Text = "資訊",
+                Content = BuildOperatorInfoPanel()
+            };
+            leftTabs.Pages.Add(_leftTabInfo);
+            leftTabs.SelectedIndexChanged += (s, e) =>
+            {
+                if (leftTabs.SelectedPage == _leftTabInfo)
+                    RefreshOperatorInfoPanel();
+            };
 
             leftLayout.Items.Add(new Eto.Forms.StackLayoutItem(leftTabs, true));
 
@@ -719,6 +732,9 @@ namespace L1FlyMapViewer
             toolRow2.Items.Add(btnRegionEdit);
             toolRow2.Items.Add(btnMarketRegionEdit);
 
+            // 操作者唯讀匯出列（Phase 9）— 唯讀模式仍可用
+            var toolRowExport = BuildOperatorExportToolbar();
+
             // 工具列容器
             var toolbarLayout = new Eto.Forms.StackLayout
             {
@@ -727,6 +743,7 @@ namespace L1FlyMapViewer
             };
             toolbarLayout.Items.Add(toolRow1);
             toolbarLayout.Items.Add(toolRow2);
+            toolbarLayout.Items.Add(toolRowExport);
 
             // 地圖顯示區域 (包含 MapViewerControl 和浮動圖層面板)
             // 使用 Drawable 自繪圖層面板以確保顏色正確顯示

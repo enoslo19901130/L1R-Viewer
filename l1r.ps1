@@ -36,7 +36,8 @@ function Find-Backend([string]$proj, [string]$exe) {
 }
 
 $pakCli = Find-Backend 'L1R.Cli'       'pakviewer-cli.exe'
-$mapCli = Find-Backend 'L1R.MapViewer' 'L1MapViewerCore.exe'
+$mapCli = Find-Backend 'L1R.MapViewer' 'L1R-MapViewer.exe'
+if (-not $mapCli) { $mapCli = Find-Backend 'L1R.MapViewer' 'L1MapViewerCore.exe' }
 
 function Show-Usage {
     Write-Host 'l1r — L1R-Viewer unified CLI (launcher)'

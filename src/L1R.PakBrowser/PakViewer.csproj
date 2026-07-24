@@ -5,7 +5,7 @@
     <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
     <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
     <RootNamespace>PakViewer</RootNamespace>
-    <AssemblyName>PakViewer</AssemblyName>
+    <AssemblyName>L1R-PakBrowser</AssemblyName>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon></ApplicationIcon>
@@ -78,6 +78,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lin.Helper.Core\Lin.Helper.Core.csproj" />
+    <ProjectReference Include="..\L1R.Shared\L1R.Shared.csproj" />
   </ItemGroup>
 
 

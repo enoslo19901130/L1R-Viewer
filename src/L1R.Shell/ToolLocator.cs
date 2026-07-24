@@ -6,10 +6,12 @@ namespace L1R.Shell;
 public static class ToolLocator
 {
     public static string? FindMapViewer()
-        => Find("L1R.MapViewer", "L1MapViewerCore.exe");
+        => Find("L1R.MapViewer", "L1R-MapViewer.exe")
+           ?? Find("L1R.MapViewer", "L1MapViewerCore.exe");
 
     public static string? FindPakBrowser()
-        => Find("L1R.PakBrowser", "PakViewer.exe");
+        => Find("L1R.PakBrowser", "L1R-PakBrowser.exe")
+           ?? Find("L1R.PakBrowser", "PakViewer.exe");
 
     public static string? FindCli()
         => Find("L1R.Cli", "pakviewer-cli.exe");

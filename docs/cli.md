@@ -42,6 +42,11 @@ On failure: prints `錯誤` / `原因` / `建議` and exits with code **2**.
 
 Other map verbs are passed through (`export-tiles`, `render-adjacent`, `batch-export`, …).
 
+```powershell
+# region side-car files (Market / TeleportOk / fishing)
+pakviewer-cli map regions <client>\map\53 --json
+```
+
 ### Sprite (direct CLI)
 
 ```powershell

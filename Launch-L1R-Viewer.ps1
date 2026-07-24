@@ -31,8 +31,10 @@ function Find-Exe([string]$proj, [string]$exe) {
 }
 
 $shell = Find-Exe 'L1R.Shell' 'L1R-Viewer.exe'
-$map = Find-Exe 'L1R.MapViewer' 'L1MapViewerCore.exe'
-$pak = Find-Exe 'L1R.PakBrowser' 'PakViewer.exe'
+$map = Find-Exe 'L1R.MapViewer' 'L1R-MapViewer.exe'
+if (-not $map) { $map = Find-Exe 'L1R.MapViewer' 'L1MapViewerCore.exe' }
+$pak = Find-Exe 'L1R.PakBrowser' 'L1R-PakBrowser.exe'
+if (-not $pak) { $pak = Find-Exe 'L1R.PakBrowser' 'PakViewer.exe' }
 $cli = Find-Exe 'L1R.Cli' 'pakviewer-cli.exe'
 
 switch ($Mode) {

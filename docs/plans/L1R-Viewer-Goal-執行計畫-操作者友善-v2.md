@@ -247,21 +247,21 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 9.1 **首次開圖流程**  
+- [x] 9.1 **首次開圖流程**  
   - 若無 client：彈出資料夾選擇 + validator  
   - 地圖下拉支援搜尋 mapId / 名稱  
-- [ ] 9.2 **一鍵匯出工具列**（唯讀可用）  
+- [x] 9.2 **一鍵匯出工具列**（唯讀可用）  
   - 匯出目前地圖 PNG（讀 settings.defaultMaxSize）  
   - 匯出傳送點 JSON  
   - 匯出通行屬性  
   - 開啟輸出資料夾  
-- [ ] 9.3 **側欄「資訊」面板**（對齊 MCP）  
+- [x] 9.3 **側欄「資訊」面板**（對齊 MCP）  
   - 分段數、邊界、Layer7 清單（可點選跳座標）  
   - 區域檔存在否（Market / TeleportOk / fishing）  
-- [ ] 9.4 進度：export-fullmap 顯示狀態（即使 CLI 子行程也要「處理中…」）  
-- [ ] 9.5 唯讀模式下：編輯工具列維持隱藏；**匯出仍可用**（匯出是讀取）  
-- [ ] 9.6 錯誤：Tile.idx 缺失、記憶體不足時給縮小 max-size 建議  
-- [ ] 9.7 文件：`docs/OPERATOR-MANUAL.md` 地圖章節 + 截圖占位說明  
+- [x] 9.4 進度：export-fullmap 顯示狀態（即使 CLI 子行程也要「處理中…」）  
+- [x] 9.5 唯讀模式下：編輯工具列維持隱藏；**匯出仍可用**（匯出是讀取）  
+- [x] 9.6 錯誤：Tile.idx 缺失、記憶體不足時給縮小 max-size 建議  
+- [x] 9.7 文件：`docs/OPERATOR-MANUAL.md` 地圖章節 + 截圖占位說明  
 
 **交付物**：MapViewer UX 增強、操作手冊地圖章  
 
@@ -287,15 +287,15 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 10.1 Client 模式強化：開 client 根目錄即聚合 `sprite*.idx`  
-- [ ] 10.2 **智慧搜尋列**：支援  
+- [x] 10.1 Client 模式強化：開 client 根目錄即聚合 `sprite*.idx`  
+- [x] 10.2 **智慧搜尋列**：支援  
   - 純數字 → 當 sprite id（列 `{id}-*.spx`）  
   - 文字 → 檔名 contains  
-- [ ] 10.3 Sprite 預覽：frames 列表 + 尺寸；SPX 解碼錯誤顯示可讀訊息  
-- [ ] 10.4 一鍵「匯出目前選取為 PNG」→ defaultOutputDir  
-- [ ] 10.5 刪除/寫回僅編輯模式可見（已有基礎，需回歸測試 + 提示一致）  
-- [ ] 10.6 文字檔預覽：保留編碼自動偵測；狀態列顯示目前編碼  
-- [ ] 10.7 與 MCP `sprite_info` / `export_sprite_frames` 參數語意對齊文件表  
+- [x] 10.3 Sprite 預覽：frames 列表 + 尺寸；SPX 解碼錯誤顯示可讀訊息  
+- [x] 10.4 一鍵「匯出目前選取為 PNG」→ defaultOutputDir  
+- [x] 10.5 刪除/寫回僅編輯模式可見（已有基礎，需回歸測試 + 提示一致）  
+- [x] 10.6 文字檔預覽：保留編碼自動偵測；狀態列顯示目前編碼  
+- [x] 10.7 與 MCP `sprite_info` / `export_sprite_frames` 參數語意對齊文件表  
 
 **交付物**：PakBrowser UX、操作手冊資產章  
 
@@ -333,10 +333,10 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 11.1 補齊缺口 CLI（regions 等）  
-- [ ] 11.2 更新 `docs/cli.md` / `docs/mcp.md` / OPERATOR-MANUAL 交叉連結  
-- [ ] 11.3 MCP smoke 擴充：validate_client + list_regions  
-- [ ] 11.4 （可選）`l1r.ps1` 參數風格統一：`--client` `--id` `--output`（保留舊別名一版）  
+- [x] 11.1 補齊缺口 CLI（regions 等）  
+- [x] 11.2 更新 `docs/cli.md` / `docs/mcp.md` / OPERATOR-MANUAL 交叉連結  
+- [x] 11.3 MCP smoke 擴充：validate_client + list_regions  
+- [x] 11.4 （可選）`l1r.ps1` 參數風格統一：`--client` `--id` `--output`（保留舊別名一版）  
 
 **驗收 Gate**
 
@@ -356,17 +356,17 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 12.1 輸出檔名（可選、建議做）：  
+- [x] 12.1 輸出檔名（可選、建議做）：  
   - `L1R-Viewer.exe`（Shell）  
   - `L1R-MapViewer.exe`  
   - `L1R-PakBrowser.exe`  
   - `l1r.exe`（CLI 或仍 ps1 + 未來 single-file）  
   - 更新所有 launcher 尋找邏輯  
-- [ ] 12.2 關於對話框：版本、repo 連結、唯讀說明  
-- [ ] 12.3 `docs/CHANGELOG.md` 維護  
-- [ ] 12.4 Release 檢查清單：`docs/RELEASE-CHECKLIST.md`  
-- [ ] 12.5 （可選）`dotnet publish` 腳本一鍵產出 `dist\` 可攜資料夾  
-- [ ] 12.6 Tag 範例：`v1.1.0-operator-ux` 並 push tag  
+- [x] 12.2 關於對話框：版本、repo 連結、唯讀說明  
+- [x] 12.3 `docs/CHANGELOG.md` 維護  
+- [x] 12.4 Release 檢查清單：`docs/RELEASE-CHECKLIST.md`  
+- [x] 12.5 （可選）`dotnet publish` 腳本一鍵產出 `dist\` 可攜資料夾  
+- [x] 12.6 Tag 範例：`v1.1.0-operator-ux` 並 push tag  
 
 **驗收 Gate**
 
@@ -386,12 +386,12 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 13.1 GUI 煙測腳本清單（人工）+ 半自動 CLI 回歸 `tests/regression.ps1`  
-- [ ] 13.2 大 map（id=4）render 超時/記憶體：GUI 建議 max-size  
-- [ ] 13.3 日誌：GUI 提供「開啟 log 資料夾」  
-- [ ] 13.4 無障礙：主要按鈕有文字不只 icon；高對比狀態（唯讀徽章）  
-- [ ] 13.5 CI 增加：`l1r.ps1 help` 與 `doctor` 若有測試 fixture 的輕量路徑  
-- [ ] 13.6 （可選）parity：`spr export --scale classic` 實驗分支  
+- [x] 13.1 GUI 煙測腳本清單（人工）+ 半自動 CLI 回歸 `tests/regression.ps1`  
+- [x] 13.2 大 map（id=4）render 超時/記憶體：GUI 建議 max-size  
+- [x] 13.3 日誌：GUI 提供「開啟 log 資料夾」  
+- [x] 13.4 無障礙：主要按鈕有文字不只 icon；高對比狀態（唯讀徽章）  
+- [x] 13.5 CI 增加：`l1r.ps1 help` 與 `doctor` 若有測試 fixture 的輕量路徑  
+- [x] 13.6 （可選）parity：`spr export --scale classic` 實驗分支  
 
 **驗收 Gate**
 

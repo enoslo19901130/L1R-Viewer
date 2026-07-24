@@ -354,7 +354,7 @@ namespace PakViewer
             }
 
             // Search box (filename)
-            _searchBox = new TextBox { PlaceholderText = I18n.T("Label.Search") };
+            _searchBox = new TextBox { PlaceholderText = "搜尋檔名或 sprite ID（如 167）" };
             _searchBox.TextChanged += OnSearchChanged;
 
             // Extension filter
@@ -464,6 +464,10 @@ namespace PakViewer
             var exportToMenuItem = new ButtonMenuItem { Text = I18n.T("Context.ExportSelectedTo") };
             exportToMenuItem.Click += OnExportSelectedTo;
             fileContextMenu.Items.Add(exportToMenuItem);
+
+            var exportDefaultMenuItem = new ButtonMenuItem { Text = "匯出到預設輸出資料夾" };
+            exportDefaultMenuItem.Click += OnExportSelectedToDefaultOutput;
+            fileContextMenu.Items.Add(exportDefaultMenuItem);
 
             var exportSprAsPngMenuItem = new ButtonMenuItem { Text = I18n.T("Context.ExportSprAsPng") };
             exportSprAsPngMenuItem.Click += OnExportSprAsPng;
@@ -3584,11 +3588,24 @@ namespace PakViewer
                         continue;
                 }
 
-                // Apply filename search filter
+                // Apply filename search filter (Phase 10: numeric = sprite id prefix)
                 if (!string.IsNullOrEmpty(_currentFilter))
                 {
-                    if (!fileName.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
+                    string filter = _currentFilter.Trim();
+                    if (int.TryParse(filter, out int spriteId))
+                    {
+                        // 167 → 167-*.spx / 167.spr / 167-0.spx
+                        string prefixDash = spriteId.ToString() + "-";
+                        string prefixDot = spriteId.ToString() + ".";
+                        if (!fileName.StartsWith(prefixDash, StringComparison.OrdinalIgnoreCase)
+                            && !fileName.StartsWith(prefixDot, StringComparison.OrdinalIgnoreCase)
+                            && !string.Equals(Path.GetFileNameWithoutExtension(fileName), spriteId.ToString(), StringComparison.OrdinalIgnoreCase))
+                            continue;
+                    }
+                    else if (!fileName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                    {
                         continue;
+                    }
                 }
 
                 // Apply content search filter
@@ -3938,6 +3955,35 @@ namespace PakViewer
 
             var (exported, failed) = ExportFilesToFolder(dialog.Directory);
             _statusLabel.Text = I18n.T("Status.Exported", exported) + (failed > 0 ? $" ({I18n.T("Status.ExportFailed", failed)})" : "");
+        }
+
+        /// <summary>
+        /// Phase 10: export selection to L1R-Viewer default output dir (Documents or settings).
+        /// </summary>
+        private void OnExportSelectedToDefaultOutput(object sender, EventArgs e)
+        {
+            if (_fileGrid.SelectedRows.Count() == 0)
+            {
+                _statusLabel.Text = I18n.T("Status.NoSelection");
+                return;
+            }
+
+            string dir;
+            try
+            {
+                var settings = L1R.Shared.AppSettings.Load();
+                dir = settings.DefaultOutputDir ?? L1R.Shared.AppSettings.GetDefaultOutputDirectory();
+            }
+            catch
+            {
+                dir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    "L1R-Viewer", "exports");
+            }
+            Directory.CreateDirectory(dir);
+            var (exported, failed) = ExportFilesToFolder(dir);
+            _statusLabel.Text = $"已匯出 {exported} 到 {dir}" + (failed > 0 ? $" (失敗 {failed})" : "");
+            MessageBox.Show(this, $"匯出 {exported} 個檔案到:\n{dir}", "匯出完成", MessageBoxType.Information);
         }
 
         private (int exported, int failed) ExportFilesToFolder(string outputFolder)
