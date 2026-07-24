@@ -211,16 +211,16 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 8.1 新增 `src/L1R.Shell`（Eto 或 WinForms，建議 **Eto** 與既有一致）
+- [x] 8.1 新增 `src/L1R.Shell`（Eto 或 WinForms，建議 **Eto** 與既有一致）
   - 歡迎頁 / 最近清單 / 瀏覽選 client
   - 按鈕：地圖、資產、輸出資料夾、Doctor、說明（開 GETTING-STARTED 或內嵌 Markdown 簡易檢視）
   - 狀態列：唯讀 / 編輯模式、目前 client 路徑
-- [ ] 8.2 「開啟地圖」：傳 `lastClientPath` 給 MapViewer（命令列參數或 IPC）
-- [ ] 8.3 「開啟資產」：同上給 PakBrowser
-- [ ] 8.4 設定對話框：語系、預設 max-size、輸出目錄、進階編輯（需勾選 + 說明危險）
-- [ ] 8.5 `Launch-L1R-Viewer.ps1` 預設改開 Shell；保留 `map`/`pak` 子命令
-- [ ] 8.6 （可選）安裝捷徑腳本 `Install-Shortcuts.ps1`（桌面 + 開始功能表）
-- [ ] 8.7 產品圖示統一（沿用 MapViewer icon 或新 L1R 標誌）
+- [x] 8.2 「開啟地圖」：傳 `lastClientPath` 給 MapViewer（命令列參數或 IPC）
+- [x] 8.3 「開啟資產」：同上給 PakBrowser
+- [x] 8.4 設定對話框：語系、預設 max-size、輸出目錄、進階編輯（需勾選 + 說明危險）
+- [x] 8.5 `Launch-L1R-Viewer.ps1` 預設改開 Shell；保留 `map`/`pak` 子命令
+- [x] 8.6 （可選）安裝捷徑腳本 `Install-Shortcuts.ps1`（桌面 + 開始功能表）
+- [x] 8.7 產品圖示統一（沿用 MapViewer icon 或新 L1R 標誌）
 
 **交付物**：可執行 Shell、捷徑腳本、更新 README 首段「從這裡開始」
 

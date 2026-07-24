@@ -23,6 +23,17 @@ dotnet build L1R-Viewer.slnx -c Release
 
 成功條件：`0 個錯誤`。
 
+## 步驟 1b（建議）：開主畫面 Shell
+
+```powershell
+.\Launch-L1R-Viewer.ps1
+# 或
+.\src\L1R.Shell\bin\Release\net10.0-windows\L1R-Viewer.exe
+```
+
+在主畫面按「選擇客戶端資料夾」→「健康檢查」→「開啟地圖 / 開啟資產」。  
+可選：`.\Install-Shortcuts.ps1` 建立桌面捷徑。
+
 ## 步驟 2：選擇客戶端並健康檢查（doctor）
 
 把「客戶端根目錄」想成工作區：裡面同時有 `map\` 與 `Tile.idx`（不是只選 `map` 子資料夾）。

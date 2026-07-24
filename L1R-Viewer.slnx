@@ -6,6 +6,9 @@
   <Folder Name="/src/L1R.Cli/">
     <Project Path="src/L1R.Cli/PakViewer.Cli.csproj" />
   </Folder>
+  <Folder Name="/src/L1R.Shell/">
+    <Project Path="src/L1R.Shell/L1R.Shell.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/L1R.Shared.Tests/L1R.Shared.Tests.csproj" />
   </Folder>

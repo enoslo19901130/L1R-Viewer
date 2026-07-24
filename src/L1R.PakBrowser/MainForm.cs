@@ -124,7 +124,12 @@ namespace PakViewer
         // Settings
         private AppSettings _settings;
 
-        public MainForm()
+        public MainForm() : this(null)
+        {
+        }
+
+        /// <param name="startupClientFolder">Optional client root from Shell / CLI.</param>
+        public MainForm(string startupClientFolder)
         {
             _settings = AppSettings.Load();
 
@@ -132,6 +137,12 @@ namespace PakViewer
             if (!string.IsNullOrEmpty(_settings.Language))
             {
                 I18n.SetLanguage(_settings.Language);
+            }
+
+            // Prefer path from Shell so both GUIs share the same client
+            if (!string.IsNullOrEmpty(startupClientFolder) && Directory.Exists(startupClientFolder))
+            {
+                _settings.LastClientFolder = startupClientFolder;
             }
 
             Title = Program.EnableEdit

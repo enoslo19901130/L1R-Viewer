@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>L1R.Shell</RootNamespace>
+    <AssemblyName>L1R-Viewer</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>L1R-Viewer</Product>
+    <Description>L1R-Viewer operator shell — single entry for map and asset tools</Description>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Eto.Forms" Version="2.9.0" />
+    <PackageReference Include="Eto.Platform.Wpf" Version="2.9.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\L1R.Shared\L1R.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

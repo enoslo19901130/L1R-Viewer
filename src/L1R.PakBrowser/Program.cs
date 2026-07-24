@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Eto;
@@ -27,11 +28,19 @@ namespace PakViewer
                 args = list.ToArray();
             }
 
-            // CLI mode - not implemented in cross-platform version
-            // Use the AnalyzeMTil tool or Lin.Helper.Core library directly for CLI operations
+            // Optional client root folder from Shell / command line
+            string clientFolder = null;
+            foreach (var a in list)
+            {
+                if (!string.IsNullOrWhiteSpace(a) && !a.StartsWith("-") && Directory.Exists(a))
+                {
+                    clientFolder = Path.GetFullPath(a);
+                    break;
+                }
+            }
 
             // GUI mode - use Eto.Forms for cross-platform
-            new Application(Platform.Detect).Run(new MainForm());
+            new Application(Platform.Detect).Run(new MainForm(clientFolder));
         }
     }
 }
