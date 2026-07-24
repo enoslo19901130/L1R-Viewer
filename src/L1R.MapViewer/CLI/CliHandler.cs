@@ -40,6 +40,14 @@ namespace L1MapViewer.CLI
 
             try
             {
+                // 寫入類指令必須 --enable-edit（在 Program.Main 解析）
+                if (IsWriteCommand(command) && !L1MapViewerCore.Program.EnableEdit)
+                {
+                    Console.Error.WriteLine(
+                        $"錯誤: '{command}' 為寫入指令，預設停用。請加上 --enable-edit 後再執行。");
+                    return 2;
+                }
+
                 switch (command)
                 {
                     case "info":
@@ -162,6 +170,16 @@ namespace L1MapViewer.CLI
                 Console.WriteLine($"錯誤: {ex.Message}");
                 return 1;
             }
+        }
+
+        /// <summary>
+        /// 寫入/修改類 CLI 指令（需 --enable-edit）
+        /// </summary>
+        private static bool IsWriteCommand(string command)
+        {
+            return command is
+                "fix" or "trim-s32" or "clear-l8" or "import-fs32" or
+                "downscale-tile";
         }
 
         /// <summary>

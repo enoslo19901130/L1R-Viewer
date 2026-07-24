@@ -17,6 +17,20 @@ namespace PakViewer.Cli
 
             var command = args[0].ToLowerInvariant();
             var subArgs = args.Length > 1 ? args[1..] : Array.Empty<string>();
+            bool enableEdit = subArgs.Any(a => a.Equals("--enable-edit", StringComparison.OrdinalIgnoreCase));
+            if (enableEdit)
+                subArgs = subArgs.Where(a => !a.Equals("--enable-edit", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            // 寫入類指令預設停用
+            if (command is "add" or "delete" or "create" or "import" or "replace")
+            {
+                if (!enableEdit)
+                {
+                    Console.Error.WriteLine(
+                        $"錯誤: 'pak {command}' 為寫入指令，預設停用。請加上 --enable-edit 後再執行。");
+                    return 2;
+                }
+            }
 
             return command switch
             {

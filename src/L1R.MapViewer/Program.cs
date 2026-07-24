@@ -19,6 +19,12 @@ static class Program
     // 效能 Log 開關（供 MapForm 讀取）
     public static bool PerfLogEnabled { get; private set; } = false;
 
+    /// <summary>
+    /// 寫入/編輯功能開關。預設 false（唯讀）;需明確傳入 --enable-edit 才開放存檔等寫入入口。
+    /// CLI 寫入類指令同樣檢查此旗標（見 CliHandler）。
+    /// </summary>
+    public static bool EnableEdit { get; private set; } = false;
+
     // 全域啟動計時器
     public static Stopwatch StartupStopwatch { get; } = Stopwatch.StartNew();
 
@@ -36,15 +42,21 @@ static class Program
         DebugLog.Log($"[PROGRAM] Version: {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}");
         DebugLog.Log($"[PROGRAM] Args: {string.Join(" ", args)}");
 
-        // 檢查是否啟用效能 Log
+        // 檢查是否啟用效能 Log / 編輯模式
         var argsList = args.ToList();
         if (argsList.Contains("--perf-log"))
         {
             PerfLogEnabled = true;
             argsList.Remove("--perf-log");
-            args = argsList.ToArray();
             LogPerf("[PROGRAM] PerfLog enabled");
         }
+        if (argsList.Contains("--enable-edit"))
+        {
+            EnableEdit = true;
+            argsList.Remove("--enable-edit");
+            DebugLog.Log("[PROGRAM] EnableEdit=true (write/edit features unlocked)");
+        }
+        args = argsList.ToArray();
 
         // 檢查是否為 CLI 模式
         if (args.Length > 0 && args[0].ToLower() == "-cli")

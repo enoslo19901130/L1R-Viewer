@@ -376,6 +376,12 @@ namespace L1FlyMapViewer
 
             LogPerf("[FORM-CTOR] InitializeComponent done");
 
+            // 預設唯讀：未給 --enable-edit 時隱藏/停用寫入入口
+            if (!L1MapViewerCore.Program.EnableEdit)
+            {
+                ApplyReadOnlyMode();
+            }
+
             // 初始化渲染防抖Timer（50ms延遲，減少等待時間）
             renderDebounceTimer = new Timer();
             renderDebounceTimer.Interval = 50;
@@ -3645,7 +3651,7 @@ namespace L1FlyMapViewer
                     }
 
                     this.toolStripStatusLabel2.Text = $"Maps={dictionary.Count}, Files={L1MapHelper.LastTotalFileCount}";
-                    btnSaveS32.Enabled = !ClientDataSourceManager.IsReadOnly;
+                    btnSaveS32.Enabled = L1MapViewerCore.Program.EnableEdit && !ClientDataSourceManager.IsReadOnly;
                     this.toolStripStatusLabel1.Text = $"載入完成 - Zone3desc:{L1MapHelper.LastLoadZone3descMs}ms, ZoneXml:{L1MapHelper.LastLoadZoneXmlMs}ms, 掃描目錄:{L1MapHelper.LastScanDirectoriesMs}ms, UI:{uiMs}ms (總計:{readMs + uiMs}ms)";
                     Utils.ShowProgressBar(false, this);
                     LogPerf("[LOADMAP-UI] Done");
@@ -17577,10 +17583,47 @@ namespace L1FlyMapViewer
         }
 
         /// <summary>
+        /// 預設唯讀模式：停用/隱藏寫入與破壞性編輯入口。
+        /// 需啟動參數 --enable-edit 才開放。
+        /// </summary>
+        private void ApplyReadOnlyMode()
+        {
+            try
+            {
+                if (btnSaveS32 != null)
+                {
+                    btnSaveS32.Enabled = false;
+                    btnSaveS32.Visible = false;
+                }
+                if (menuSaveS32 != null)
+                {
+                    menuSaveS32.Enabled = false;
+                    menuSaveS32.Visible = false;
+                }
+                if (menuUndo != null)
+                {
+                    menuUndo.Enabled = false;
+                }
+                this.Title = (this.Title ?? "L1R MapViewer") + " [Read-Only]";
+                DebugLog.Log("[FORM] ApplyReadOnlyMode: save/edit UI disabled (pass --enable-edit to unlock)");
+            }
+            catch (Exception ex)
+            {
+                DebugLog.Log($"[FORM] ApplyReadOnlyMode partial failure: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// 更新保存按鈕狀態 - 有未保存變更時顯示橙色
         /// </summary>
         private void UpdateSaveButtonState()
         {
+            if (!L1MapViewerCore.Program.EnableEdit)
+            {
+                btnSaveS32.Enabled = false;
+                return;
+            }
+
             bool hasChanges = _document.HasUnsavedChanges || HasUnsavedMarketRegionChanges();
             if (hasChanges)
             {
