@@ -49,6 +49,21 @@ static class Program
         // 檢查是否為 CLI 模式
         if (args.Length > 0 && args[0].ToLower() == "-cli")
         {
+            // 部分 CLI 指令(如 export-fullmap)在離線算圖時會觸及 Eto API,
+            // 需要一個已初始化的 Eto Platform 才能建立 offscreen bitmap。
+            // 這裡建立一個 headless Application(不呼叫 Run),讓這些指令在 CLI 模式也能運作。
+            try
+            {
+                if (Application.Instance == null)
+                {
+                    _ = new Application(Platform.Detect);
+                    DebugLog.Log("[PROGRAM] Headless Eto platform initialized for CLI mode");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugLog.Log($"[PROGRAM] Headless Eto init for CLI failed (non-fatal, render commands may not work): {ex.Message}");
+            }
             return CliHandler.Execute(args);
         }
 
