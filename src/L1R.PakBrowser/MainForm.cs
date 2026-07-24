@@ -134,7 +134,9 @@ namespace PakViewer
                 I18n.SetLanguage(_settings.Language);
             }
 
-            Title = I18n.T("AppTitle");
+            Title = Program.EnableEdit
+                ? "L1R-Viewer PakBrowser"
+                : "L1R-Viewer PakBrowser [Read-Only]";
             ClientSize = new Size(1200, 800);
             MinimumSize = new Size(800, 600);
 

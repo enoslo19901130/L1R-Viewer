@@ -141,11 +141,13 @@ namespace PakViewer
             exportAllCmd.Executed += OnExportAll;
             toolsMenu.Items.Add(exportAllCmd);
 
-            toolsMenu.Items.Add(new SeparatorMenuItem());
-
-            var deleteCmd = new Command { MenuText = I18n.T("Menu.Tools.DeleteSelected") };
-            deleteCmd.Executed += OnDeleteSelected;
-            toolsMenu.Items.Add(deleteCmd);
+            if (Program.EnableEdit)
+            {
+                toolsMenu.Items.Add(new SeparatorMenuItem());
+                var deleteCmd = new Command { MenuText = I18n.T("Menu.Tools.DeleteSelected") };
+                deleteCmd.Executed += OnDeleteSelected;
+                toolsMenu.Items.Add(deleteCmd);
+            }
 
             menu.Items.Add(toolsMenu);
 
@@ -477,9 +479,13 @@ namespace PakViewer
 
             fileContextMenu.Items.Add(new SeparatorMenuItem());
 
-            var deleteMenuItem = new ButtonMenuItem { Text = I18n.T("Context.DeleteSelected") };
-            deleteMenuItem.Click += OnDeleteSelected;
-            fileContextMenu.Items.Add(deleteMenuItem);
+            // 寫入類操作僅在 --enable-edit 時顯示
+            if (Program.EnableEdit)
+            {
+                var deleteMenuItem = new ButtonMenuItem { Text = I18n.T("Context.DeleteSelected") };
+                deleteMenuItem.Click += OnDeleteSelected;
+                fileContextMenu.Items.Add(deleteMenuItem);
+            }
 
             fileContextMenu.Items.Add(new SeparatorMenuItem());
 
@@ -1401,6 +1407,15 @@ namespace PakViewer
 
             try
             {
+                if (!Program.EnableEdit)
+                {
+                    MessageBox.Show(this,
+                        "Read-only mode: write-back is disabled. Restart with --enable-edit to allow writes.",
+                        "L1R-Viewer Read-Only",
+                        MessageBoxType.Information);
+                    return;
+                }
+
                 if (_currentViewerPak != null)
                 {
                     // 替換 PAK 中的檔案內容
@@ -4234,6 +4249,15 @@ namespace PakViewer
 
         private void OnDeleteSelected(object sender, EventArgs e)
         {
+            if (!Program.EnableEdit)
+            {
+                MessageBox.Show(this,
+                    "Read-only mode: delete is disabled. Restart with --enable-edit to allow writes.",
+                    "L1R-Viewer Read-Only",
+                    MessageBoxType.Information);
+                return;
+            }
+
             if (_fileGrid.SelectedRows.Count() == 0)
             {
                 MessageBox.Show(this, I18n.T("Status.NoSelection"), I18n.T("Context.Delete"), MessageBoxType.Information);

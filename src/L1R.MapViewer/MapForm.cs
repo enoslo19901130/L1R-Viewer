@@ -17461,15 +17461,27 @@ namespace L1FlyMapViewer
 
         private bool EnsureWritableClient(string operation)
         {
-            if (!ClientDataSourceManager.IsReadOnly)
-                return true;
+            if (!L1MapViewerCore.Program.EnableEdit)
+            {
+                WinFormsMessageBox.Show(
+                    $"唯讀模式：無法執行「{operation}」。\n請以 --enable-edit 啟動以開放寫入。",
+                    "L1R-Viewer Read-Only",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return false;
+            }
 
-            WinFormsMessageBox.Show(
-                $"Lineage M DAT 目前以唯讀模式開啟，無法執行「{operation}」。\n尚未支援寫回 DAT。",
-                "唯讀資料來源",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            return false;
+            if (ClientDataSourceManager.IsReadOnly)
+            {
+                WinFormsMessageBox.Show(
+                    $"Lineage M DAT 目前以唯讀模式開啟，無法執行「{operation}」。\n尚未支援寫回 DAT。",
+                    "唯讀資料來源",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return false;
+            }
+
+            return true;
         }
 
         // 保存 S32 按鈕點擊事件 - 保存所有被修改的 S32 檔案和 MarketRegion
@@ -17590,21 +17602,42 @@ namespace L1FlyMapViewer
         {
             try
             {
-                if (btnSaveS32 != null)
+                void Disable(Control c, bool hide = true)
                 {
-                    btnSaveS32.Enabled = false;
-                    btnSaveS32.Visible = false;
+                    if (c == null) return;
+                    c.Enabled = false;
+                    if (hide) c.Visible = false;
                 }
-                if (menuSaveS32 != null)
+
+                void DisableMenu(ToolStripMenuItem m)
                 {
-                    menuSaveS32.Enabled = false;
-                    menuSaveS32.Visible = false;
+                    if (m == null) return;
+                    m.Enabled = false;
+                    m.Visible = false;
                 }
-                if (menuUndo != null)
-                {
-                    menuUndo.Enabled = false;
-                }
-                this.Title = (this.Title ?? "L1R MapViewer") + " [Read-Only]";
+
+                // 主存檔入口
+                Disable(btnSaveS32);
+                DisableMenu(menuSaveS32);
+                DisableMenu(menuUndo);
+                DisableMenu(menuRedo);
+                DisableMenu(menuBatchReplaceTile);
+
+                // 編輯工具列（破壞性操作）
+                Disable(btnToolCopy, hide: false);
+                Disable(btnToolPaste, hide: false);
+                Disable(btnToolDelete, hide: false);
+                Disable(btnToolUndo, hide: false);
+                Disable(btnToolRedo, hide: false);
+                Disable(btnToolSave);
+                Disable(btnToolReplaceTile, hide: false);
+                Disable(btnToolAddS32, hide: false);
+                Disable(btnToolClearLayer7, hide: false);
+                Disable(btnToolClearCell, hide: false);
+                Disable(btnToolTestTil, hide: false);
+                Disable(btnToolClearTestTil, hide: false);
+
+                this.Title = "L1R-Viewer MapViewer [Read-Only]";
                 DebugLog.Log("[FORM] ApplyReadOnlyMode: save/edit UI disabled (pass --enable-edit to unlock)");
             }
             catch (Exception ex)
