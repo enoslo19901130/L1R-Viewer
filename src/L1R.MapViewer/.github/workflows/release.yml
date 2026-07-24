@@ -1,0 +1,457 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 觸發條件：推送 v 開頭的 tag，例如 v1.24.1225143000
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PROJECT_NAME: L1MapViewer
+  CSPROJ_NAME: L1MapViewerCore.csproj
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        VERSION=${TAG#v}
+        echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+        # 解析版本號，將時間戳分割成符合 .NET 格式
+        # 例如: v1.26.01122103 -> 1.26.112.2103 (MAJOR.YEAR.MMDD.HHMM)
+        if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]{8})$ ]]; then
+          MAJOR="${BASH_REMATCH[1]}"
+          YEAR="${BASH_REMATCH[2]}"
+          TIMESTAMP="${BASH_REMATCH[3]}"
+          MMDD="${TIMESTAMP:0:4}"
+          HHMM="${TIMESTAMP:4:4}"
+          # 移除前導零以避免八進制解析問題
+          MMDD=$((10#$MMDD))
+          HHMM=$((10#$HHMM))
+          DOTNET_VERSION="${MAJOR}.${YEAR}.${MMDD}.${HHMM}"
+        else
+          # 如果不是時間戳格式，直接使用原版本號
+          DOTNET_VERSION="$VERSION"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "DOTNET_VERSION=$DOTNET_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.CSPROJ_NAME }} -r win-x64
+
+    - name: Build Self-Contained
+      run: |
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0-windows --configuration Release --runtime win-x64 --self-contained true --no-restore -o publish-sc /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }}
+
+    - name: Build Framework-Dependent
+      run: |
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0-windows --configuration Release --self-contained false -o publish-fd /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }}
+
+    - name: Build Win7 (SkiaSharp 2.88)
+      run: |
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0-windows --configuration Release --self-contained false -o publish-win7 /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }} /p:SkiaLegacy=true
+
+    - name: Create ZIP archives
+      shell: pwsh
+      run: |
+        Compress-Archive -Path "publish-sc/*" -DestinationPath "${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win-x64-self-contained.zip"
+        Compress-Archive -Path "publish-fd/*" -DestinationPath "${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win-x64.zip"
+        Compress-Archive -Path "publish-win7/*" -DestinationPath "${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win7-x64.zip"
+
+    - name: Upload self-contained artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_NAME }}-win-x64-self-contained
+        path: ${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win-x64-self-contained.zip
+
+    - name: Upload framework-dependent artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_NAME }}-win-x64
+        path: ${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win-x64.zip
+
+    - name: Upload Win7 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_NAME }}-win7-x64
+        path: ${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-win7-x64.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        VERSION=${TAG#v}
+        echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+        # 解析版本號，將時間戳分割成符合 .NET 格式
+        if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]{8})$ ]]; then
+          MAJOR="${BASH_REMATCH[1]}"
+          YEAR="${BASH_REMATCH[2]}"
+          TIMESTAMP="${BASH_REMATCH[3]}"
+          MMDD="${TIMESTAMP:0:4}"
+          HHMM="${TIMESTAMP:4:4}"
+          MMDD=$((10#$MMDD))
+          HHMM=$((10#$HHMM))
+          DOTNET_VERSION="${MAJOR}.${YEAR}.${MMDD}.${HHMM}"
+        else
+          DOTNET_VERSION="$VERSION"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "DOTNET_VERSION=$DOTNET_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install GTK dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.CSPROJ_NAME }} -r linux-x64
+
+    - name: Build and Publish
+      run: |
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0 --configuration Release --runtime linux-x64 --self-contained true --no-restore -o publish /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }}
+
+    - name: Create ZIP archive
+      run: |
+        cd publish
+        chmod +x ${{ env.PROJECT_NAME }}* 2>/dev/null || true
+        chmod +x L1MapViewerCore* 2>/dev/null || true
+        zip -r "../${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-linux-x64.zip" .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_NAME }}-linux-x64
+        path: ${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-linux-x64.zip
+
+  build-macos:
+    runs-on: macos-26
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        VERSION=${TAG#v}
+        echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+        # 解析版本號，將時間戳分割成符合 .NET 格式
+        if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]{8})$ ]]; then
+          MAJOR="${BASH_REMATCH[1]}"
+          YEAR="${BASH_REMATCH[2]}"
+          TIMESTAMP="${BASH_REMATCH[3]}"
+          MMDD="${TIMESTAMP:0:4}"
+          HHMM="${TIMESTAMP:4:4}"
+          MMDD=$((10#$MMDD))
+          HHMM=$((10#$HHMM))
+          DOTNET_VERSION="${MAJOR}.${YEAR}.${MMDD}.${HHMM}"
+        else
+          DOTNET_VERSION="$VERSION"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "DOTNET_VERSION=$DOTNET_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        # Pin to 10.0.1xx feature band — the 10.0.2xx SDK's bundled workload
+        # produces a broken native launcher that crashes at xamarin_vm_initialize
+        dotnet-version: '10.0.1xx'
+
+    - name: Install macOS workload
+      run: |
+        # Install macOS workload — let NuGet resolve the latest workload set version.
+        # The SDK-bundled workload (26.0.11017) produces a broken native launcher
+        # that crashes at xamarin_vm_initialize. A newer version from NuGet may fix this.
+        sudo dotnet workload install macos
+        dotnet workload list
+
+    - name: Import Code Signing Certificate
+      env:
+        CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+        CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      run: |
+        echo "$CERTIFICATE_P12" | base64 --decode > certificate.p12
+        security create-keychain -p actions build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p actions build.keychain
+        security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
+        rm certificate.p12
+
+    - name: Restore dependencies
+      run: |
+        dotnet restore ${{ env.CSPROJ_NAME }} -r osx-x64 /p:UseGtk=false
+        dotnet restore ${{ env.CSPROJ_NAME }} -r osx-arm64 /p:UseGtk=false
+
+    - name: Build x64
+      run: |
+        # 使用 net10.0-macos TFM 將 Objective-C bridge 編譯進執行檔 (fixes #4)
+        # 關閉 R2R 讓 managed DLL 架構無關，以便建立 universal binary
+        # CreatePackage=false 防止產生 .pkg，只保留平面檔案
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0-macos --configuration Release --runtime osx-x64 --self-contained true -o publish-x64-pkg /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }} /p:PublishReadyToRun=false /p:UseGtk=false /p:CreatePackage=false /p:ValidateXcodeVersion=false /p:MtouchLink=SdkOnly
+    - name: Build arm64
+      run: |
+        dotnet publish ${{ env.CSPROJ_NAME }} -f net10.0-macos --configuration Release --runtime osx-arm64 --self-contained true -o publish-arm64-pkg /p:Version=${{ steps.get_version.outputs.DOTNET_VERSION }} /p:PublishReadyToRun=false /p:UseGtk=false /p:CreatePackage=false /p:ValidateXcodeVersion=false /p:MtouchLink=SdkOnly
+    - name: Fix MonoBundleExecutable in Info.plist
+      run: |
+        # Ensure MonoBundleExecutable points to the correct .dll in Info.plist.
+        # Workload 26.0 sets it to .exe (wrong), workload 26.2 omits it entirely.
+        for app in bin/Release/net10.0-macos/osx-*/L1MapViewerCore.app; do
+          PLIST="$app/Contents/Info.plist"
+          CURRENT=$(/usr/libexec/PlistBuddy -c "Print :MonoBundleExecutable" "$PLIST" 2>/dev/null || echo "")
+          if [[ -z "$CURRENT" ]]; then
+            /usr/libexec/PlistBuddy -c "Add :MonoBundleExecutable string L1MapViewerCore.dll" "$PLIST"
+            echo "Added MonoBundleExecutable: L1MapViewerCore.dll in $PLIST"
+          elif [[ "$CURRENT" == *.exe ]]; then
+            FIXED="${CURRENT%.exe}.dll"
+            /usr/libexec/PlistBuddy -c "Set :MonoBundleExecutable $FIXED" "$PLIST"
+            echo "Fixed MonoBundleExecutable: $CURRENT -> $FIXED in $PLIST"
+          else
+            echo "MonoBundleExecutable already correct: $CURRENT in $PLIST"
+          fi
+        done
+
+    - name: Verify native macOS platform
+      run: |
+        ARM64_APP=bin/Release/net10.0-macos/osx-arm64/L1MapViewerCore.app
+        X64_APP=bin/Release/net10.0-macos/osx-x64/L1MapViewerCore.app
+
+        echo "=== Checking arm64 .app bundle ==="
+        for f in Eto.macOS.dll Microsoft.macOS.dll; do
+          if [ -f "$ARM64_APP/Contents/MonoBundle/$f" ]; then
+            echo "✓ $f found in arm64 build"
+          else
+            echo "✗ ERROR: $f NOT found in arm64 build"
+            exit 1
+          fi
+        done
+        if [ -f "$ARM64_APP/Contents/MonoBundle/Eto.Gtk.dll" ]; then
+          echo "✗ ERROR: Eto.Gtk.dll should NOT be in arm64 build"
+          exit 1
+        else
+          echo "✓ Eto.Gtk.dll correctly excluded from arm64 build"
+        fi
+
+        echo "=== Checking x64 .app bundle ==="
+        for f in Eto.macOS.dll Microsoft.macOS.dll; do
+          if [ -f "$X64_APP/Contents/MonoBundle/$f" ]; then
+            echo "✓ $f found in x64 build"
+          else
+            echo "✗ ERROR: $f NOT found in x64 build"
+            exit 1
+          fi
+        done
+
+        echo "=== Native executables ==="
+        file "$ARM64_APP/Contents/MacOS/L1MapViewerCore"
+        file "$X64_APP/Contents/MacOS/L1MapViewerCore"
+
+    - name: Create macOS App Bundle and Universal Binary DMG
+      run: |
+        APP_NAME="${{ env.PROJECT_NAME }}.app"
+        ARM64_APP="bin/Release/net10.0-macos/osx-arm64/L1MapViewerCore.app"
+        X64_APP="bin/Release/net10.0-macos/osx-x64/L1MapViewerCore.app"
+
+        # 使用 SDK 產生的 arm64 .app bundle 作為基底
+        mkdir -p universal
+        cp -R "$ARM64_APP" "universal/$APP_NAME"
+
+        # 更新 bundle 名稱
+        /usr/libexec/PlistBuddy -c "Set :CFBundleName L1MapViewer" "universal/$APP_NAME/Contents/Info.plist" || true
+
+        # 使用 lipo 合併 Contents/MacOS/ 中的 Mach-O 檔案
+        for file in "universal/$APP_NAME/Contents/MacOS/"*; do
+          fname=$(basename "$file")
+          x64_file="$X64_APP/Contents/MacOS/$fname"
+          if [ -f "$x64_file" ] && file "$file" | grep -q "Mach-O"; then
+            echo "Creating universal binary for MacOS/$fname"
+            lipo -create "$file" "$x64_file" -output "$file.universal" 2>/dev/null && mv "$file.universal" "$file"
+          fi
+        done
+
+        # 使用 lipo 合併 Contents/MonoBundle/ 中的 Mach-O 檔案 (dylib)
+        for file in "universal/$APP_NAME/Contents/MonoBundle/"*; do
+          fname=$(basename "$file")
+          x64_file="$X64_APP/Contents/MonoBundle/$fname"
+          if [ -f "$x64_file" ] && file "$file" | grep -q "Mach-O"; then
+            echo "Creating universal binary for MonoBundle/$fname"
+            lipo -create "$file" "$x64_file" -output "$file.universal" 2>/dev/null && mv "$file.universal" "$file"
+          fi
+        done
+
+        # 建立 entitlements (CoreCLR JIT 需要這些權限才能在 hardened runtime 下運作)
+        cat > /tmp/entitlements.plist <<ENTITLEMENTS
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>com.apple.security.cs.allow-jit</key>
+          <true/>
+          <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+          <true/>
+        </dict>
+        </plist>
+        ENTITLEMENTS
+
+        # Developer ID 簽署 + hardened runtime + JIT entitlements
+        IDENTITY="TonyQ CO., LTD. (8JVDJGLLYR)"
+        for dylib in "universal/$APP_NAME/Contents/MonoBundle/"*.dylib; do
+          codesign --force --options runtime --sign "$IDENTITY" "$dylib" 2>/dev/null || true
+        done
+        codesign --force --deep --options runtime --entitlements /tmp/entitlements.plist --sign "$IDENTITY" "universal/$APP_NAME"
+
+        # 建立 DMG
+        hdiutil create -volname "${{ env.PROJECT_NAME }}" -srcfolder "universal/$APP_NAME" -ov -format UDZO "${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-osx-universal.dmg"
+
+    - name: Notarize DMG
+      env:
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        DMG_FILE="${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-osx-universal.dmg"
+        echo "Submitting $DMG_FILE for notarization..."
+        xcrun notarytool submit "$DMG_FILE" \
+          --apple-id "$APPLE_ID" \
+          --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+          --team-id "$APPLE_TEAM_ID" \
+          --wait --timeout 30m
+        echo "Stapling notarization ticket..."
+        xcrun stapler staple "$DMG_FILE"
+
+    - name: Upload universal artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PROJECT_NAME }}-osx-universal
+        path: ${{ env.PROJECT_NAME }}-${{ steps.get_version.outputs.TAG }}-osx-universal.dmg
+
+  release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        VERSION=${TAG#v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: List artifacts
+      run: find artifacts -type f \( -name "*.zip" -o -name "*.dmg" \)
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ env.PROJECT_NAME }} ${{ steps.get_version.outputs.TAG }}
+        body: |
+          ## ${{ env.PROJECT_NAME }} ${{ steps.get_version.outputs.TAG }}
+
+          ### Downloads
+
+          | Platform | File | Note |
+          |----------|------|------|
+          | Windows x64 (Win10+) | `*-win-x64.zip` | 需安裝 [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
+          | Windows x64 (Win10+) | `*-win-x64-self-contained.zip` | 包含 .NET Runtime，可直接執行 |
+          | Windows x64 (Win7+) | `*-win7-x64.zip` | Win7 相容版，需安裝 .NET 10 Runtime |
+          | Linux x64 | `*-linux-x64.zip` | Self-contained |
+          | macOS Universal | `*-osx-universal.dmg` | Self-contained, 支援 Intel & Apple Silicon |
+
+          ### macOS / Linux 使用說明
+
+          **macOS**:
+          1. 下載 DMG 檔案並雙擊掛載
+          2. 將 L1MapViewer.app 拖曳到應用程式資料夾
+          3. 雙擊即可開啟（已完成 Apple 公證）
+
+          **Linux**:
+          ```bash
+          # 解壓縮後，給予執行權限
+          chmod +x L1MapViewerCore
+          ./L1MapViewerCore
+          ```
+
+          ### Changes
+          See [commit history](https://github.com/${{ github.repository }}/commits/${{ steps.get_version.outputs.TAG }}) for details.
+        files: |
+          artifacts/**/*.zip
+          artifacts/**/*.dmg
+        draft: false
+        prerelease: ${{ contains(steps.get_version.outputs.TAG, '-') }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Discord Release Notification (Release Channel)
+      if: success()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK_RELEASE }}
+        nodetail: true
+        title: "🎉 新版本發布: ${{ steps.get_version.outputs.TAG }}"
+        description: |
+          **${{ env.PROJECT_NAME }}** 已發布新版本！
+
+          📦 [下載連結](https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.TAG }})
+          📝 [變更紀錄](https://github.com/${{ github.repository }}/commits/${{ steps.get_version.outputs.TAG }})
+
+          支援平台: Windows x64 (Win7+/Win10+), Linux x64, macOS (Intel & Apple Silicon)
+        color: 0x00ff00
+
+    - name: Discord Release Notification (Dev Channel)
+      if: success()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK_DEV }}
+        nodetail: true
+        title: "🎉 新版本發布: ${{ steps.get_version.outputs.TAG }}"
+        description: |
+          **${{ env.PROJECT_NAME }}** 已發布新版本！
+
+          📦 [下載連結](https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.TAG }})
+          📝 [變更紀錄](https://github.com/${{ github.repository }}/commits/${{ steps.get_version.outputs.TAG }})
+
+          支援平台: Windows x64 (Win7+/Win10+), Linux x64, macOS (Intel & Apple Silicon)
+        color: 0x00ff00

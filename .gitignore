@@ -1,0 +1,24 @@
+# build outputs
+bin/
+obj/
+publish/
+*.user
+*.suo
+.vs/
+
+# test / render scratch output
+tests/out/
+tests/result*.bmp
+tests/*.png
+
+# python
+__pycache__/
+*.pyc
+
+# logs
+*.log
+nlog-internal.log
+
+# OS
+.DS_Store
+Thumbs.db

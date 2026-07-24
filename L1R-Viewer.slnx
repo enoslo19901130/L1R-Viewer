@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Lin.Helper.Core/Lin.Helper.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/L1R.Cli/">
+    <Project Path="src/L1R.Cli/PakViewer.Cli.csproj" />
+  </Folder>
+  <Folder Name="/src/L1R.MapViewer/">
+    <Project Path="src/L1R.MapViewer/L1MapViewerCore.csproj" />
+  </Folder>
+  <Folder Name="/src/L1R.PakBrowser/">
+    <Project Path="src/L1R.PakBrowser/PakViewer.csproj" />
+  </Folder>
+</Solution>

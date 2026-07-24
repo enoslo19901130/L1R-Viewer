@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Lin.Helper.Core</RootNamespace>
+    <AssemblyName>Lin.Helper.Core</AssemblyName>
+
+    <!-- NuGet 套件屬性 -->
+    <PackageId>Lin.Helper.Core</PackageId>
+    <Version>1.5.4</Version>
+    <Authors>Flyworld</Authors>
+    <Company></Company>
+    <Description>Cross-platform Lineage 1 file format library - PAK, SPR, DAT, IMG, TIL, S32/SEG map files, MarketRegion, and XML encryption/decryption tools</Description>
+    <PackageTags>lineage;pak;spr;dat;s32;seg;map;game;file-format;cross-platform</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/tony1223/PakViewer</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- 產生 XML 文件 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.4" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+  </ItemGroup>
+
+  <!-- 內嵌資源 (Map1-Map5 for PAK encryption) -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.bin">
+      <LogicalName>Lin.Helper.Core.Resources.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,10 @@
+<Project>
+  <!-- L1R-Viewer 共用中繼資料。刻意保持極簡：不設 TargetFramework/Nullable/LangVersion，
+       以免覆寫各子專案(Core 多目標 net8;9;10、MapViewer net10.0-windows)自己的設定。 -->
+  <PropertyGroup>
+    <Product>L1R-Viewer</Product>
+    <Company>L1R-Viewer</Company>
+    <Authors>enoslo19901130</Authors>
+    <Copyright>Copyright © 2026</Copyright>
+  </PropertyGroup>
+</Project>

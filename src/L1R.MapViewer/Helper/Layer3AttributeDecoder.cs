@@ -1,0 +1,110 @@
+using System.Collections.Generic;
+using L1MapViewer.Localization;
+
+namespace L1MapViewer.Helper
+{
+    /// <summary>
+    /// Layer3 屬性解碼器 - 解析屬性 bit 標記
+    /// </summary>
+    public static class Layer3AttributeDecoder
+    {
+        /// <summary>
+        /// 例外值替換 - 特定值需要轉換為 5 後再進行區域類型判斷
+        /// 參考: passrule_txt.md
+        /// 33 (0x21), 65 (0x41), 69 (0x45), 73 (0x49), 77 (0x4D) → 5
+        /// </summary>
+        private static int ReplaceException(int value)
+        {
+            // if (value == 33 || value == 65 || value == 69 || value == 73 || value == 77)
+            //     return 5;
+            if (value == 65)
+            {
+                return 5;
+            }
+            return value;
+        }
+
+        /// <summary>
+        /// 取得屬性標記說明
+        /// </summary>
+        public static string GetAttributeFlags(short value)
+        {
+            List<string> flags = new List<string>();
+
+            if ((value & 0x0001) != 0) flags.Add(LocalizationManager.L("Attr_Impassable"));
+
+            // 例外值替換後判斷區域類型
+            int replaced = ReplaceException(value);
+            int lowNibble = replaced & 0x0F;
+            if ((lowNibble & 0x04) != 0) flags.Add(LocalizationManager.L("Attr_SafeZone"));
+            else if ((lowNibble & 0x0C) == 0x08) flags.Add(LocalizationManager.L("Attr_CombatZone"));
+
+            if ((value & 0x0002) != 0) flags.Add("bit1");
+            if ((value & 0x0010) != 0) flags.Add("bit4");
+            if ((value & 0x0020) != 0) flags.Add("bit5");
+            if ((value & 0x0040) != 0) flags.Add("bit6");
+            if ((value & 0x0080) != 0) flags.Add("bit7");
+            if ((value & 0x0100) != 0) flags.Add("bit8");
+            if ((value & 0x0200) != 0) flags.Add("bit9");
+            if ((value & 0x0400) != 0) flags.Add("bit10");
+            if ((value & 0x0800) != 0) flags.Add("bit11");
+            if ((value & 0x1000) != 0) flags.Add("bit12");
+            if ((value & 0x2000) != 0) flags.Add("bit13");
+            if ((value & 0x4000) != 0) flags.Add("bit14");
+            if ((value & 0x8000) != 0) flags.Add("bit15");
+
+            if (flags.Count == 0) flags.Add(LocalizationManager.L("Attr_NoFlags"));
+
+            return string.Join(", ", flags);
+        }
+
+        /// <summary>
+        /// 檢查是否為不可通行
+        /// </summary>
+        public static bool IsBlocked(short value)
+        {
+            return (value & 0x0001) != 0;
+        }
+
+        /// <summary>
+        /// 檢查是否為安全區
+        /// </summary>
+        public static bool IsSafeZone(short value)
+        {
+            int replaced = ReplaceException(value);
+            int lowNibble = replaced & 0x0F;
+            return (lowNibble & 0x04) != 0;
+        }
+
+        /// <summary>
+        /// 檢查是否為戰鬥區
+        /// </summary>
+        public static bool IsCombatZone(short value)
+        {
+            int replaced = ReplaceException(value);
+            int lowNibble = replaced & 0x0F;
+            return !IsSafeZone(value) && (lowNibble & 0x0C) == 0x08;
+        }
+
+        /// <summary>
+        /// 取得區域類型名稱
+        /// </summary>
+        public static string GetZoneName(short value)
+        {
+            if (IsSafeZone(value)) return LocalizationManager.L("Attr_SafeZone");
+            if (IsCombatZone(value)) return LocalizationManager.L("Attr_CombatZone");
+            return LocalizationManager.L("Attr_NormalZone");
+        }
+
+        /// <summary>
+        /// 取得區域類型數值（按照 MapTool 的 getZone 邏輯）
+        /// </summary>
+        /// <returns>256=一般區域, 512=安全區域, 1024=戰鬥區域</returns>
+        public static int GetZoneValue(int tileValue)
+        {
+            if (IsSafeZone((short)tileValue)) return 512;
+            if (IsCombatZone((short)tileValue)) return 1024;
+            return 256;
+        }
+    }
+}
