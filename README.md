@@ -62,7 +62,9 @@ Register via `.mcp.json` (`l1r-viewer`). Tools are **read-only** (no fix/import/
 
 - `docs/cli.md` — command reference
 - `docs/mcp.md` — MCP tool list
+- `docs/HEADLESS.md` — agent / headless notes
 - `docs/decoder-parity-report.md` — old vs new sprite decoder notes
+- `docs/plans/` — execution plan + live progress
 
 ## Rules
 
