@@ -10,6 +10,7 @@ publish/
 x64/
 x86/
 *.nupkg
+out/
 
 # test / render scratch output
 tests/out/
