@@ -6,7 +6,7 @@
     l1r pak|spr|til|dat|xml|version|help ... → L1R.Cli(pakviewer-cli):封存/圖素/文字
 
   map 別名(方便使用,對應 L1MapViewer 的實際 verb):
-    l1r map render      <mapDir> <out.png>   →  export-fullmap   (★目前 headless 算圖有已知 bug,見 plans 進度)
+    l1r map render      <mapDir> <out.png>   →  export-fullmap   (Skia/MapExporter headless 路徑)
     l1r map passability <mapDir> <out.txt>   →  export-passability
     l1r map portals     <s32>    <out.json>  →  export            (輸出含 layer7 傳送點)
     l1r map list-maps   <client>             →  list-maps

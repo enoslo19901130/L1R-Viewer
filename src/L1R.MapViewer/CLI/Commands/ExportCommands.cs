@@ -1,21 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-// using System.Drawing; // Replaced with Eto.Drawing
-// using System.Drawing.Imaging; // Replaced with SkiaSharp
 using System.IO;
 using System.Linq;
-using L1FlyMapViewer;
-using L1MapViewer.Converter;
 using L1MapViewer.Helper;
 using L1MapViewer.Models;
-using L1MapViewer.Reader;
-using L1MapViewer.Compatibility;
+using SkiaSharp;
 
 namespace L1MapViewer.CLI.Commands
 {
     /// <summary>
-    /// 地圖匯出相關命令
+    /// 地圖匯出相關命令。
+    /// headless 算圖走 MapExporter (SkiaSharp + TileProvider)，避開 WinForms→Eto shim 的 Bitmap 型別問題。
     /// </summary>
     public static class ExportCommands
     {
@@ -31,7 +26,7 @@ namespace L1MapViewer.CLI.Commands
                 Console.WriteLine("選項:");
                 Console.WriteLine("  --scale <比例>    縮放比例 (預設 1.0，即原始大小)");
                 Console.WriteLine("  --max-size <px>   最大邊長像素 (與 scale 互斥)");
-                Console.WriteLine("  --quality <0-3>   渲染品質 (0=最快, 3=最高品質，預設 2)");
+                Console.WriteLine("  --no-layer8       不繪製 Layer8 SPR 特效");
                 Console.WriteLine();
                 Console.WriteLine("範例:");
                 Console.WriteLine("  export-fullmap C:\\client\\map\\4 map4.png");
@@ -43,10 +38,9 @@ namespace L1MapViewer.CLI.Commands
             string mapPath = args[0];
             string outputPath = args[1];
 
-            // 解析選項
             float scale = 1.0f;
             int maxSize = 0;
-            int quality = 2;
+            bool showLayer8 = true;
 
             for (int i = 2; i < args.Length; i++)
             {
@@ -66,64 +60,86 @@ namespace L1MapViewer.CLI.Commands
                         return 1;
                     }
                 }
+                else if (args[i] == "--no-layer8")
+                {
+                    showLayer8 = false;
+                }
                 else if (args[i] == "--quality" && i + 1 < args.Length)
                 {
-                    if (!int.TryParse(args[++i], out quality) || quality < 0 || quality > 3)
-                    {
-                        Console.WriteLine("錯誤: quality 必須在 0 到 3 之間");
-                        return 1;
-                    }
+                    // 相容舊參數；Skia 路徑固定高品質，略過數值
+                    i++;
                 }
             }
 
-            // 載入地圖
+            // MapLoader 設定 Share.LineagePath 並預讀 map 索引
             var loadResult = MapLoader.Load(mapPath);
             if (!loadResult.Success)
+                return 1;
+
+            var document = new MapDocument();
+            if (!document.Load(loadResult.MapId) || document.S32Files.Count == 0)
             {
+                Console.WriteLine($"無法載入地圖文件: {loadResult.MapId}");
                 return 1;
             }
 
-            // 計算實際縮放比例
-            if (maxSize > 0)
-            {
-                scale = Math.Min(
-                    (float)maxSize / loadResult.MapWidth,
-                    (float)maxSize / loadResult.MapHeight
-                );
-                if (scale > 1.0f) scale = 1.0f;
-            }
+            int scalePercent = ComputeScalePercent(document, scale, maxSize);
+            int outputWidth = Math.Max(1, (int)(document.MapPixelWidth * (scalePercent / 100f)));
+            int outputHeight = Math.Max(1, (int)(document.MapPixelHeight * (scalePercent / 100f)));
 
-            Console.WriteLine($"地圖: {loadResult.MapId}");
-            Console.WriteLine($"原始大小: {loadResult.MapWidth} x {loadResult.MapHeight} px");
-            Console.WriteLine($"縮放比例: {scale:F3}");
-
-            int outputWidth = (int)(loadResult.MapWidth * scale);
-            int outputHeight = (int)(loadResult.MapHeight * scale);
+            Console.WriteLine($"地圖: {document.MapId}");
+            Console.WriteLine($"原始大小: {document.MapPixelWidth} x {document.MapPixelHeight} px");
+            Console.WriteLine($"縮放: {scalePercent}%");
             Console.WriteLine($"輸出大小: {outputWidth} x {outputHeight} px");
+            Console.WriteLine($"S32 區塊: {document.S32Files.Count}");
 
-            // 渲染地圖
-            var sw = Stopwatch.StartNew();
-
-            using (var bitmap = RenderFullMap(loadResult, scale, quality))
+            var options = new MapExporter.ExportOptions
             {
-                sw.Stop();
-                Console.WriteLine($"渲染耗時: {sw.ElapsedMilliseconds} ms");
+                ShowLayer1 = true,
+                ShowLayer2 = true,
+                ShowLayer4 = true,
+                ShowLayer8 = showLayer8,
+                ScalePercent = scalePercent,
+            };
 
-                // 儲存圖片
-                string ext = Path.GetExtension(outputPath).ToLower();
-                ImageFormat format = ext == ".jpg" || ext == ".jpeg" ? ImageFormat.Jpeg : ImageFormat.Png;
+            var exporter = new MapExporter();
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                using var bitmap = exporter.ExportMap(document, options);
+                sw.Stop();
+                if (bitmap == null)
+                {
+                    Console.WriteLine("渲染失敗: ExportMap 回傳 null");
+                    return 1;
+                }
+
+                Console.WriteLine($"渲染耗時: {sw.ElapsedMilliseconds} ms");
 
                 string dir = Path.GetDirectoryName(outputPath);
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                {
                     Directory.CreateDirectory(dir);
-                }
 
-                bitmap.Save(outputPath, format);
-                Console.WriteLine($"已儲存: {outputPath}");
+                string ext = Path.GetExtension(outputPath).ToLowerInvariant();
+                if (ext == ".jpg" || ext == ".jpeg")
+                    SaveAsJpeg(bitmap, outputPath, quality: 90);
+                else
+                    exporter.SaveToPng(bitmap, outputPath);
+
+                var fi = new FileInfo(outputPath);
+                Console.WriteLine($"已儲存: {outputPath} ({fi.Length:N0} bytes)");
+                return 0;
             }
-
-            return 0;
+            catch (Exception ex)
+            {
+                sw.Stop();
+                Console.WriteLine($"錯誤: {ex.Message}");
+                return 1;
+            }
+            finally
+            {
+                exporter.ClearCache();
+            }
         }
 
         /// <summary>
@@ -138,9 +154,9 @@ namespace L1MapViewer.CLI.Commands
                 Console.WriteLine("選項:");
                 Console.WriteLine("  --scale <比例>    縮放比例 (預設 1.0)");
                 Console.WriteLine("  --max-size <px>   最大邊長像素 (與 scale 互斥)");
-                Console.WriteLine("  --quality <0-3>   渲染品質 (預設 2)");
                 Console.WriteLine("  --format <格式>   輸出格式 png/jpg (預設 png)");
                 Console.WriteLine("  --skip-existing   跳過已存在的檔案");
+                Console.WriteLine("  --no-layer8       不繪製 Layer8 SPR");
                 Console.WriteLine();
                 Console.WriteLine("範例:");
                 Console.WriteLine("  batch-export C:\\client\\map C:\\output");
@@ -151,35 +167,26 @@ namespace L1MapViewer.CLI.Commands
             string mapRoot = args[0];
             string outputDir = args[1];
 
-            // 解析選項
             float scale = 1.0f;
             int maxSize = 0;
-            int quality = 2;
             string format = "png";
             bool skipExisting = false;
+            bool showLayer8 = true;
 
             for (int i = 2; i < args.Length; i++)
             {
                 if (args[i] == "--scale" && i + 1 < args.Length)
-                {
                     float.TryParse(args[++i], out scale);
-                }
                 else if (args[i] == "--max-size" && i + 1 < args.Length)
-                {
                     int.TryParse(args[++i], out maxSize);
-                }
-                else if (args[i] == "--quality" && i + 1 < args.Length)
-                {
-                    int.TryParse(args[++i], out quality);
-                }
                 else if (args[i] == "--format" && i + 1 < args.Length)
-                {
-                    format = args[++i].ToLower();
-                }
+                    format = args[++i].ToLowerInvariant();
                 else if (args[i] == "--skip-existing")
-                {
                     skipExisting = true;
-                }
+                else if (args[i] == "--no-layer8")
+                    showLayer8 = false;
+                else if (args[i] == "--quality" && i + 1 < args.Length)
+                    i++; // 相容舊參數
             }
 
             if (!Directory.Exists(mapRoot))
@@ -188,13 +195,9 @@ namespace L1MapViewer.CLI.Commands
                 return 1;
             }
 
-            // 確保輸出目錄存在
             if (!Directory.Exists(outputDir))
-            {
                 Directory.CreateDirectory(outputDir);
-            }
 
-            // 尋找所有地圖資料夾
             var mapDirs = Directory.GetDirectories(mapRoot)
                 .Where(d => Directory.GetFiles(d, "*.s32").Length > 0)
                 .OrderBy(d =>
@@ -211,72 +214,92 @@ namespace L1MapViewer.CLI.Commands
             int skipCount = 0;
             int failCount = 0;
             var totalSw = Stopwatch.StartNew();
+            var exporter = new MapExporter();
 
-            for (int i = 0; i < mapDirs.Count; i++)
+            try
             {
-                string mapPath = mapDirs[i];
-                string mapId = Path.GetFileName(mapPath);
-                string outputPath = Path.Combine(outputDir, $"{mapId}.{format}");
-
-                Console.WriteLine($"[{i + 1}/{mapDirs.Count}] 處理地圖 {mapId}...");
-
-                // 檢查是否跳過
-                if (skipExisting && File.Exists(outputPath))
+                for (int i = 0; i < mapDirs.Count; i++)
                 {
-                    Console.WriteLine($"  已存在，跳過");
-                    skipCount++;
-                    continue;
-                }
+                    string mapPath = mapDirs[i];
+                    string mapId = Path.GetFileName(mapPath);
+                    string outputPath = Path.Combine(outputDir, $"{mapId}.{format}");
 
-                try
-                {
-                    // 載入地圖（靜默模式）
-                    var loadResult = MapLoader.Load(mapPath, verbose: false);
-                    if (!loadResult.Success)
+                    Console.WriteLine($"[{i + 1}/{mapDirs.Count}] 處理地圖 {mapId}...");
+
+                    if (skipExisting && File.Exists(outputPath))
                     {
-                        Console.WriteLine($"  載入失敗");
-                        failCount++;
+                        Console.WriteLine("  已存在，跳過");
+                        skipCount++;
                         continue;
                     }
 
-                    // 計算縮放比例
-                    float actualScale = scale;
-                    if (maxSize > 0)
+                    try
                     {
-                        actualScale = Math.Min(
-                            (float)maxSize / loadResult.MapWidth,
-                            (float)maxSize / loadResult.MapHeight
-                        );
-                        if (actualScale > 1.0f) actualScale = 1.0f;
-                    }
+                        var loadResult = MapLoader.Load(mapPath, verbose: false);
+                        if (!loadResult.Success)
+                        {
+                            Console.WriteLine("  載入失敗");
+                            failCount++;
+                            continue;
+                        }
 
-                    int outputWidth = (int)(loadResult.MapWidth * actualScale);
-                    int outputHeight = (int)(loadResult.MapHeight * actualScale);
+                        var document = new MapDocument();
+                        if (!document.Load(loadResult.MapId) || document.S32Files.Count == 0)
+                        {
+                            Console.WriteLine("  MapDocument 載入失敗");
+                            failCount++;
+                            continue;
+                        }
 
-                    var sw = Stopwatch.StartNew();
-                    using (var bitmap = RenderFullMap(loadResult, actualScale, quality))
-                    {
+                        int scalePercent = ComputeScalePercent(document, scale, maxSize);
+                        int outputWidth = Math.Max(1, (int)(document.MapPixelWidth * (scalePercent / 100f)));
+                        int outputHeight = Math.Max(1, (int)(document.MapPixelHeight * (scalePercent / 100f)));
+
+                        var options = new MapExporter.ExportOptions
+                        {
+                            ShowLayer1 = true,
+                            ShowLayer2 = true,
+                            ShowLayer4 = true,
+                            ShowLayer8 = showLayer8,
+                            ScalePercent = scalePercent,
+                        };
+
+                        var sw = Stopwatch.StartNew();
+                        using var bitmap = exporter.ExportMap(document, options);
                         sw.Stop();
 
-                        ImageFormat imgFormat = format == "jpg" ? ImageFormat.Jpeg : ImageFormat.Png;
-                        bitmap.Save(outputPath, imgFormat);
+                        if (bitmap == null)
+                        {
+                            Console.WriteLine("  渲染失敗");
+                            failCount++;
+                            continue;
+                        }
 
-                        Console.WriteLine($"  {loadResult.MapWidth}x{loadResult.MapHeight} -> {outputWidth}x{outputHeight}, {sw.ElapsedMilliseconds}ms");
+                        if (format == "jpg" || format == "jpeg")
+                            SaveAsJpeg(bitmap, outputPath, quality: 90);
+                        else
+                            exporter.SaveToPng(bitmap, outputPath);
+
+                        Console.WriteLine($"  {document.MapPixelWidth}x{document.MapPixelHeight} -> {outputWidth}x{outputHeight} ({scalePercent}%), {sw.ElapsedMilliseconds}ms");
                         successCount++;
                     }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"  錯誤: {ex.Message}");
-                    failCount++;
-                }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"  錯誤: {ex.Message}");
+                        failCount++;
+                    }
 
-                // 強制 GC 釋放記憶體
-                if ((i + 1) % 10 == 0)
-                {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
+                    if ((i + 1) % 10 == 0)
+                    {
+                        exporter.ClearCache();
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                    }
                 }
+            }
+            finally
+            {
+                exporter.ClearCache();
             }
 
             totalSw.Stop();
@@ -292,286 +315,45 @@ namespace L1MapViewer.CLI.Commands
         }
 
         /// <summary>
-        /// 渲染完整地圖
+        /// 依 scale / max-size / 記憶體上限計算實際縮放百分比。
         /// </summary>
-        private static Bitmap RenderFullMap(MapLoader.LoadResult loadResult, float scale, int quality)
+        private static int ComputeScalePercent(MapDocument document, float scale, int maxSize)
         {
-            int fullWidth = loadResult.MapWidth;
-            int fullHeight = loadResult.MapHeight;
-            int scaledWidth = (int)(fullWidth * scale);
-            int scaledHeight = (int)(fullHeight * scale);
+            float effective = scale;
+            if (effective <= 0 || effective > 1) effective = 1f;
 
-            // 決定渲染策略
-            bool useDirectScaling = scale < 0.5f || loadResult.S32Files.Count > 20;
-
-            var renderer = new MiniMapRenderer();
-            var checkedFiles = new HashSet<string>(loadResult.S32Files.Keys);
-
-            if (useDirectScaling)
+            if (maxSize > 0 && document.MapPixelWidth > 0 && document.MapPixelHeight > 0)
             {
-                // 使用 MiniMapRenderer 的直接縮放模式
-                int targetSize = Math.Max(scaledWidth, scaledHeight);
-                MiniMapRenderer.RenderStats stats;
-                MiniMapRenderer.MiniMapBounds bounds;
-                return renderer.RenderMiniMap(fullWidth, fullHeight, targetSize, loadResult.S32Files, checkedFiles, out stats, out bounds);
+                float byMax = Math.Min(
+                    (float)maxSize / document.MapPixelWidth,
+                    (float)maxSize / document.MapPixelHeight);
+                if (byMax < effective) effective = byMax;
+                if (effective > 1f) effective = 1f;
             }
-            else
+
+            int percent = Math.Max(1, (int)Math.Round(effective * 100f));
+            if (percent > 100) percent = 100;
+
+            // 超過 MapExporter 記憶體上限時自動縮小
+            if (MapExporter.WillExceedMemoryLimit(document, percent))
             {
-                // 渲染原始大小，然後縮放
-                // 先創建完整大小的 bitmap
-                using (var fullBitmap = RenderFullSizeBitmap(loadResult, renderer))
+                int maxSafe = MapExporter.GetMaxScaleWithinLimit(document);
+                if (maxSafe < percent)
                 {
-                    if (Math.Abs(scale - 1.0f) < 0.001f)
-                    {
-                        // 不需要縮放，直接複製
-                        return (Bitmap)fullBitmap.Clone();
-                    }
-                    else
-                    {
-                        // 縮放
-                        var result = new Bitmap(scaledWidth, scaledHeight, PixelFormat.Format16bppRgb555);
-                        using (var g = GraphicsHelper.FromImage(result))
-                        {
-                            g.SetInterpolationMode(quality >= 2
-                                ? InterpolationMode.HighQualityBicubic
-                                : InterpolationMode.Bilinear);
-                            g.DrawImage(fullBitmap, 0, 0, scaledWidth, scaledHeight);
-                        }
-                        return result;
-                    }
+                    Console.WriteLine($"記憶體限制: 自動縮放 {percent}% → {maxSafe}%");
+                    percent = maxSafe;
                 }
             }
+
+            return Math.Max(1, percent);
         }
 
-        /// <summary>
-        /// 渲染完整大小的地圖 bitmap
-        /// </summary>
-        private static unsafe Bitmap RenderFullSizeBitmap(MapLoader.LoadResult loadResult, MiniMapRenderer renderer)
+        private static void SaveAsJpeg(SKBitmap bitmap, string filePath, int quality)
         {
-            int fullWidth = loadResult.MapWidth;
-            int fullHeight = loadResult.MapHeight;
-            int offsetX = loadResult.MinX;
-            int offsetY = loadResult.MinY;
-
-            var fullBitmap = new Bitmap(fullWidth, fullHeight, PixelFormat.Format16bppRgb555);
-
-            // 收集所有需要渲染的 tiles
-            var allTiles = new List<(int pixelX, int pixelY, int layer, int tileId, int indexId)>();
-
-            foreach (var s32Data in loadResult.S32Files.Values)
-            {
-                int[] loc = s32Data.SegInfo.GetLoc(1.0);
-                int blockOffsetX = loc[0] - offsetX;
-                int blockOffsetY = loc[1] - offsetY;
-
-                // Layer 1 (地板)
-                for (int y = 0; y < 64; y++)
-                {
-                    for (int x = 0; x < 128; x++)
-                    {
-                        var cell = s32Data.Layer1[y, x];
-                        if (cell != null && cell.TileId >= 0)
-                        {
-                            int halfX = x / 2;
-                            int baseX = -24 * halfX;
-                            int baseY = 63 * 12 - 12 * halfX;
-                            int pixelX = blockOffsetX + baseX + x * 24 + y * 24;
-                            int pixelY = blockOffsetY + baseY + y * 12;
-
-                            allTiles.Add((pixelX, pixelY, -2, cell.TileId, cell.IndexId));
-                        }
-                    }
-                }
-
-                // Layer 2
-                foreach (var item in s32Data.Layer2)
-                {
-                    if (item.TileId >= 0)
-                    {
-                        int x = item.X;
-                        int y = item.Y;
-                        int halfX = x / 2;
-                        int baseX = -24 * halfX;
-                        int baseY = 63 * 12 - 12 * halfX;
-                        int pixelX = blockOffsetX + baseX + x * 24 + y * 24;
-                        int pixelY = blockOffsetY + baseY + y * 12;
-
-                        allTiles.Add((pixelX, pixelY, -1, item.TileId, item.IndexId));
-                    }
-                }
-
-                // Layer 4 (物件)
-                foreach (var obj in s32Data.Layer4)
-                {
-                    int halfX = obj.X / 2;
-                    int baseX = -24 * halfX;
-                    int baseY = 63 * 12 - 12 * halfX;
-                    int pixelX = blockOffsetX + baseX + obj.X * 24 + obj.Y * 24;
-                    int pixelY = blockOffsetY + baseY + obj.Y * 12;
-
-                    allTiles.Add((pixelX, pixelY, obj.Layer, obj.TileId, obj.IndexId));
-                }
-            }
-
-            // 按 Layer 排序
-            var sortedTiles = allTiles.OrderBy(t => t.layer).ToList();
-
-            // 渲染到 bitmap
-            Rectangle rect = new Rectangle(0, 0, fullWidth, fullHeight);
-            BitmapData bmpData = fullBitmap.LockBits(rect, ImageLockMode.ReadWrite, fullBitmap.PixelFormat);
-            int rowpix = bmpData.Stride;
-
-            byte* ptr = (byte*)bmpData.Scan0;
-
-            // Tile 快取
-            var tilFileCache = new Dictionary<int, List<byte[]>>();
-
-            foreach (var tile in sortedTiles)
-            {
-                DrawTilToBuffer(tile.pixelX, tile.pixelY, tile.tileId, tile.indexId,
-                    rowpix, ptr, fullWidth, fullHeight, tilFileCache);
-            }
-
-            fullBitmap.UnlockBits(bmpData);
-            return fullBitmap;
-        }
-
-        /// <summary>
-        /// 繪製 Tile 到緩衝區
-        /// </summary>
-        private static unsafe void DrawTilToBuffer(int pixelX, int pixelY, int tileId, int indexId,
-            int rowpix, byte* ptr, int maxWidth, int maxHeight, Dictionary<int, List<byte[]>> tilFileCache)
-        {
-            try
-            {
-                if (!tilFileCache.TryGetValue(tileId, out List<byte[]> tilArray))
-                {
-                    string key = $"{tileId}.til";
-                    byte[] data = L1PakReader.UnPack("Tile", key);
-                    if (data == null)
-                    {
-                        tilFileCache[tileId] = null;
-                        return;
-                    }
-                    tilArray = L1Til.Parse(data);
-                    tilFileCache[tileId] = tilArray;
-                }
-
-                // 備援機制
-                if (tilArray == null || indexId >= tilArray.Count)
-                {
-                    if (tileId != 0)
-                    {
-                        if (!tilFileCache.TryGetValue(0, out tilArray))
-                        {
-                            string key = "0.til";
-                            byte[] data = L1PakReader.UnPack("Tile", key);
-                            if (data == null) return;
-                            tilArray = L1Til.Parse(data);
-                            tilFileCache[0] = tilArray;
-                        }
-                        if (tilArray == null || tilArray.Count == 0) return;
-                        indexId = 187 + ((pixelX / 24) & 1);
-                        if (indexId >= tilArray.Count)
-                            indexId = indexId % tilArray.Count;
-                    }
-                    else
-                    {
-                        if (tilArray != null && tilArray.Count > 0)
-                            indexId = indexId % tilArray.Count;
-                        else
-                            return;
-                    }
-                }
-
-                if (tilArray == null || indexId >= tilArray.Count) return;
-                byte[] tilData = tilArray[indexId];
-                if (tilData == null) return;
-
-                fixed (byte* til_ptr_fixed = tilData)
-                {
-                    byte* til_ptr = til_ptr_fixed;
-                    byte type = *(til_ptr++);
-
-                    if ((type & 0x02) == 0 && (type & 0x01) != 0)
-                    {
-                        for (int ty = 0; ty < 24; ty++)
-                        {
-                            int n = (ty <= 11) ? (ty + 1) * 2 : (23 - ty) * 2;
-                            int tx = 0;
-                            for (int p = 0; p < n; p++)
-                            {
-                                ushort color = (ushort)(*(til_ptr++) | (*(til_ptr++) << 8));
-                                int startX = pixelX + tx;
-                                int startY = pixelY + ty;
-                                if (startX >= 0 && startX < maxWidth && startY >= 0 && startY < maxHeight)
-                                {
-                                    int v = startY * rowpix + (startX * 2);
-                                    *(ptr + v) = (byte)(color & 0x00FF);
-                                    *(ptr + v + 1) = (byte)((color & 0xFF00) >> 8);
-                                }
-                                tx++;
-                            }
-                        }
-                    }
-                    else if ((type & 0x02) == 0 && (type & 0x01) == 0)
-                    {
-                        for (int ty = 0; ty < 24; ty++)
-                        {
-                            int n = (ty <= 11) ? (ty + 1) * 2 : (23 - ty) * 2;
-                            int tx = 24 - n;
-                            for (int p = 0; p < n; p++)
-                            {
-                                ushort color = (ushort)(*(til_ptr++) | (*(til_ptr++) << 8));
-                                int startX = pixelX + tx;
-                                int startY = pixelY + ty;
-                                if (startX >= 0 && startX < maxWidth && startY >= 0 && startY < maxHeight)
-                                {
-                                    int v = startY * rowpix + (startX * 2);
-                                    *(ptr + v) = (byte)(color & 0x00FF);
-                                    *(ptr + v + 1) = (byte)((color & 0xFF00) >> 8);
-                                }
-                                tx++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        byte x_offset = *(til_ptr++);
-                        byte y_offset = *(til_ptr++);
-                        byte xxLen = *(til_ptr++);
-                        byte yLen = *(til_ptr++);
-
-                        for (int ty = 0; ty < yLen; ty++)
-                        {
-                            int tx = x_offset;
-                            byte xSegmentCount = *(til_ptr++);
-                            for (int nx = 0; nx < xSegmentCount; nx++)
-                            {
-                                tx += *(til_ptr++) / 2;
-                                int xLen = *(til_ptr++);
-                                for (int p = 0; p < xLen; p++)
-                                {
-                                    ushort color = (ushort)(*(til_ptr++) | (*(til_ptr++) << 8));
-                                    int startX = pixelX + tx;
-                                    int startY = pixelY + ty + y_offset;
-                                    if (startX >= 0 && startX < maxWidth && startY >= 0 && startY < maxHeight)
-                                    {
-                                        int v = startY * rowpix + (startX * 2);
-                                        *(ptr + v) = (byte)(color & 0x00FF);
-                                        *(ptr + v + 1) = (byte)((color & 0xFF00) >> 8);
-                                    }
-                                    tx++;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // 忽略錯誤
-            }
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
+            using var stream = File.OpenWrite(filePath);
+            data.SaveTo(stream);
         }
     }
 }
