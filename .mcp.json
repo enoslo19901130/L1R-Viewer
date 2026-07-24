@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "l1r-viewer": {
+      "command": "python",
+      "args": [
+        "mcp/server.py"
+      ],
+      "cwd": "."
+    }
+  }
+}
