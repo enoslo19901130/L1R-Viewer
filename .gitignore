@@ -5,6 +5,11 @@ publish/
 *.user
 *.suo
 .vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.nupkg
 
 # test / render scratch output
 tests/out/
@@ -14,11 +19,22 @@ tests/*.png
 # python
 __pycache__/
 *.pyc
+.venv/
+venv/
 
 # logs
 *.log
 nlog-internal.log
 
-# OS
+# OS / editor
 .DS_Store
 Thumbs.db
+*.swp
+*.bak
+*.tmp
+.idea/
+.vscode/
+
+# temporary / cache
+.cache/
+Testing/

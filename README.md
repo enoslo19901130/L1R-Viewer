@@ -2,6 +2,8 @@
 
 Lineage Remastered **read-first** client asset toolkit: map render, sprite/tile/pak browse, CLI + MCP.
 
+Repository: https://github.com/enoslo19901130/L1R-Viewer
+
 ## Layout
 
 ```
@@ -12,6 +14,7 @@ src/
   L1R.PakBrowser/    # asset browser GUI (Eto)
 mcp/
   server.py          # FastMCP server name: l1r-viewer (read-only tools)
+docs/                # CLI / MCP / decoder parity notes
 l1r.ps1              # unified launcher
 ```
 
@@ -21,7 +24,7 @@ l1r.ps1              # unified launcher
 dotnet build L1R-Viewer.slnx -c Release
 ```
 
-Requires .NET SDK 10.x.
+Requires .NET SDK 10.x on Windows.
 
 ## CLI (launcher)
 
@@ -57,11 +60,12 @@ Register via `.mcp.json` (`l1r-viewer`). Tools are **read-only** (no fix/import/
 
 ## Docs
 
+- `docs/cli.md` — command reference
+- `docs/mcp.md` — MCP tool list
 - `docs/decoder-parity-report.md` — old vs new sprite decoder notes
-- Plans live under `LineageTool\plans\L1R-Viewer-*.md` (execution specs)
 
 ## Rules
 
 - Offline static assets only; no client cracking / live traffic.
 - Do not rename `Lin.Helper.Core` namespaces.
-- No remote git push unless owner requests.
+- Read-first; write paths opt-in via `--enable-edit`.
