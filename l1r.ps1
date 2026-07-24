@@ -3,6 +3,7 @@
 
   路由:
     l1r map <verb> ...   → L1R.MapViewer(-cli):地圖/S32 讀取與算圖
+    l1r doctor <client>  → L1R.Cli doctor:客戶端健康檢查
     l1r pak|spr|til|dat|xml|version|help ... → L1R.Cli(pakviewer-cli):封存/圖素/文字
 
   map 別名(方便使用,對應 L1MapViewer 的實際 verb):
@@ -44,6 +45,7 @@ function Show-Usage {
     Write-Host ''
     Write-Host 'Groups:'
     Write-Host '  map    map / S32 read + render  (backend: L1R.MapViewer)'
+    Write-Host '  doctor <client> [--json] [--remember]  client health check'
     Write-Host '  pak    PAK/IDX archive          (backend: L1R.Cli)'
     Write-Host '  spr    SPR sprite'
     Write-Host '  til    TIL tile'
@@ -99,6 +101,12 @@ if ($group -eq 'map') {
         'portals'     { exit (Invoke-MapBackend (@('export')             + $vargs)) }
         default       { exit (Invoke-MapBackend (@($verb)                + $vargs)) }
     }
+}
+elseif ($group -eq 'doctor') {
+    if (-not $pakCli) { Write-Error 'L1R.Cli backend not built. Run: dotnet build src\L1R.Cli'; exit 2 }
+    $docArgs = @('doctor') + $args2
+    & $pakCli @docArgs
+    exit $LASTEXITCODE
 }
 else {
     if (-not $pakCli) { Write-Error 'L1R.Cli backend not built. Run: dotnet build src\L1R.Cli'; exit 2 }

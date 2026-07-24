@@ -18,6 +18,16 @@ docs/                # CLI / MCP / decoder parity notes
 l1r.ps1              # unified launcher
 ```
 
+## 從這裡開始（操作者）
+
+見 **`docs/GETTING-STARTED.md`**（選 client → `doctor` → 匯出地圖）。
+
+```powershell
+dotnet build L1R-Viewer.slnx -c Release
+.\l1r.ps1 doctor "<client-root>"
+.\l1r.ps1 doctor "<client-root>" --remember
+```
+
 ## Build
 
 ```powershell

@@ -16,6 +16,7 @@ SERVER = ROOT / "mcp" / "server.py"
 
 EXPECTED_TOOLS = {
     "l1r_health",
+    "validate_client",
     "sprite_info",
     "search_sprite_entries",
     "export_sprite_frames",
@@ -87,7 +88,28 @@ async def main(client_path: str | None, map_id: int, sprite_id: int) -> None:
 
             detail = f" health.ok tools={len(names)}"
 
+            # validate_client: bad path must fail; good path must ok when client_path given
+            bad = await session.call_tool(
+                "validate_client",
+                {"client_path": str(ROOT / "tests" / "out" / "not-a-client-dir")},
+            )
+            if bad.isError:
+                raise RuntimeError(f"validate_client bad path tool error: {_text_payload(bad)}")
+            bad_data = _as_dict(bad)
+            if bad_data.get("ok"):
+                raise RuntimeError(f"validate_client should fail on missing client: {bad_data}")
+
             if client_path:
+                vc = await session.call_tool(
+                    "validate_client", {"client_path": client_path}
+                )
+                if vc.isError:
+                    raise RuntimeError(f"validate_client: {_text_payload(vc)}")
+                vc_data = _as_dict(vc)
+                if not vc_data.get("ok"):
+                    raise RuntimeError(f"validate_client not ok: {vc_data}")
+                detail += " validate_client.ok"
+
                 # map_info
                 mi = await session.call_tool(
                     "map_info", {"client_path": client_path, "map_id": map_id}

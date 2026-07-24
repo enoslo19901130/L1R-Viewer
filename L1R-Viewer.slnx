@@ -1,9 +1,13 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Lin.Helper.Core/Lin.Helper.Core.csproj" />
+    <Project Path="src/L1R.Shared/L1R.Shared.csproj" />
   </Folder>
   <Folder Name="/src/L1R.Cli/">
     <Project Path="src/L1R.Cli/PakViewer.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/L1R.Shared.Tests/L1R.Shared.Tests.csproj" />
   </Folder>
   <Folder Name="/src/L1R.MapViewer/">
     <Project Path="src/L1R.MapViewer/L1MapViewerCore.csproj" />

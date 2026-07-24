@@ -10,12 +10,25 @@
 | Group | Backend | Purpose |
 |---|---|---|
 | `map` | `L1MapViewerCore.exe -cli` | S32 maps: info, render, portals, passability |
+| `doctor` | `pakviewer-cli doctor` | Client health (`map\` + `*.idx` / Tile.idx) |
 | `pak` | `pakviewer-cli.exe` | IDX/PAK archives |
 | `spr` | `pakviewer-cli.exe` | SPR/SPX sprites |
 | `til` | `pakviewer-cli.exe` | TIL tiles |
 | `dat` | `pakviewer-cli.exe` | Lineage M DAT |
 | `xml` | `pakviewer-cli.exe` | XML crypto helpers |
 | `version` | `pakviewer-cli.exe` | Version string |
+
+### Doctor (client validation)
+
+```powershell
+.\l1r.ps1 doctor <client-folder>
+.\l1r.ps1 doctor <client-folder> --json
+.\l1r.ps1 doctor <client-folder> --remember   # write %AppData%\L1R-Viewer\settings.json
+# direct:
+pakviewer-cli doctor <client-folder> [--json] [--remember]
+```
+
+On failure: prints `錯誤` / `原因` / `建議` and exits with code **2**.
 
 ### Map aliases
 

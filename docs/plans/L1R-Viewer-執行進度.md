@@ -1,44 +1,43 @@
 # L1R-Viewer 執行進度（Live Log）
 
 > 產出 repo: https://github.com/enoslo19901130/L1R-Viewer  
-> 本機: `006-Tools\L1R-Viewer`  
 > 更新: 2026-07-25
 
 ## 現行權威計畫
 
-| 計畫 | 路徑 | 用途 |
-|---|---|---|
-| **v2 Goal（現行）** | `docs/plans/L1R-Viewer-Goal-執行計畫-操作者友善-v2.md` | **操作者友善 + GUI 整併**；從 Phase 7 起執行 |
-| v1 整併 | `docs/plans/L1R-Viewer-整併執行計畫.md` | Core→CLI→MCP 歷史規格（0–6 多已完成） |
+| 計畫 | 路徑 |
+|---|---|
+| **v2 Goal** | `docs/plans/L1R-Viewer-Goal-執行計畫-操作者友善-v2.md` |
+| v1 | `docs/plans/L1R-Viewer-整併執行計畫.md` |
 
 ## 狀態總表
 
-### v1（0–6）
+### v1（0–6）✅ 完成
+
+### v2
 
 | Phase | 說明 | 狀態 |
 |---|---|---|
-| 0–2 | 骨架 / CLI / MCP | ✅ |
-| 3 | 解碼 parity | 🟡 已記錄 |
-| 4–5 | 唯讀 gate | ✅ |
-| 6 | 品牌/文件/CI | ✅ |
+| **7** | 設定、路徑驗證、doctor、GETTING-STARTED、MCP validate_client | ✅ |
+| 8 | Shell 入口 | ⬜ |
+| 9–13 | GUI UX / 對齊 / 品牌 / 品質 | ⬜ |
 
-### v2（7–13）— 待執行
+## Phase 7 完成摘要
 
-| Phase | 說明 | 狀態 |
-|---|---|---|
-| 7 | 設定、路徑驗證、doctor、5 分鐘上手 | ⬜ |
-| 8 | 單一 Shell 入口 | ⬜ |
-| 9 | 地圖 GUI UX 整併 | ⬜ |
-| 10 | 資產 GUI UX 整併 | ⬜ |
-| 11 | GUI⇄CLI⇄MCP 對齊 | ⬜ |
-| 12 | 品牌/exe/可攜發布 | ⬜ |
-| 13 | 品質回歸 | ⬜ |
+- `src/L1R.Shared`: `ClientPathValidator`, `AppSettings`, `OperatorMessage`
+- CLI: `pakviewer-cli doctor <client> [--json] [--remember]`
+- `l1r.ps1 doctor` 別名
+- MCP: `validate_client`（唯讀）
+- `docs/GETTING-STARTED.md`（zh-TW）
+- 單元測試: `tests/L1R.Shared.Tests`（4 passed）
+- Gate: 錯誤路徑 exit=2 + 錯誤/原因/建議；真實 client `ok=true` map_count=829
 
-## GitHub
+## 驗證指令
 
-- Remote: `https://github.com/enoslo19901130/L1R-Viewer.git`
-- 每 Phase：commit + push `main`
-
-## 時間序
-
-- 2026-07-25：提交 **Goal 執行計畫 v2（操作者友善）**，尚未開工 Phase 7。
+```powershell
+dotnet build L1R-Viewer.slnx -c Release
+dotnet test tests\L1R.Shared.Tests -c Release
+.\l1r.ps1 doctor C:\Windows
+.\l1r.ps1 doctor $env:L1R_CLIENT --json
+python .\mcp\smoke_test.py --map-id 53 --id 167
+```

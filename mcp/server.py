@@ -176,6 +176,34 @@ def l1r_health() -> dict[str, Any]:
     }
 
 
+@mcp.tool()
+def validate_client(client_path: str) -> dict[str, Any]:
+    """
+    Validate a Lineage client root folder (read-only).
+    Checks for map\\ and *.idx (prefers Tile.idx). Agrees with CLI `doctor --json`.
+    """
+    cli = _ensure_cli()
+    path = str(Path(client_path).expanduser())
+    # Do not require resolve() when path missing — doctor handles that
+    completed = _run(cli, ["doctor", path, "--json"], timeout=60)
+    result = _parse_json_line(completed.stdout) or _parse_json_line(completed.stderr or "")
+    if result is None:
+        # Synthesize from exit code if backend printed non-JSON
+        text = ((completed.stdout or "") + "\n" + (completed.stderr or "")).strip()
+        return {
+            "ok": completed.returncode == 0,
+            "command": "validate_client",
+            "path": path,
+            "error": None if completed.returncode == 0 else "doctor failed",
+            "reason": text[:500] or f"exit {completed.returncode}",
+            "suggestion": "請確認路徑含 map\\ 與 Tile.idx",
+            "exit_code": completed.returncode,
+        }
+    result["command"] = result.get("command") or "validate_client"
+    result["exit_code"] = completed.returncode
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Sprite tools (via L1R.Cli)
 # ---------------------------------------------------------------------------

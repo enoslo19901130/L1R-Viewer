@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lin.Helper.Core\Lin.Helper.Core.csproj" />
+    <ProjectReference Include="..\L1R.Shared\L1R.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -27,6 +27,7 @@ namespace PakViewer.Cli
                 "xml" => XmlCommands.Run(subArgs),
                 "map" => MapCommands.Run(subArgs),
                 "til" => TilCommands.Run(subArgs),
+                "doctor" => DoctorCommands.Run(subArgs),
                 "version" or "--version" or "-v" => PrintVersion(),
                 "--help" or "-h" or "help" => PrintUsageOk(),
                 _ => UnknownCommand(group)
@@ -61,6 +62,7 @@ namespace PakViewer.Cli
             Console.WriteLine("  xml       XML encryption/decryption");
             Console.WriteLine("  map       S32/SEG map file operations");
             Console.WriteLine("  til       TIL tile file operations");
+            Console.WriteLine("  doctor    Validate client folder (map\\ + Tile.idx)");
             Console.WriteLine("  version   Show version information");
             Console.WriteLine();
             Console.WriteLine("Use 'pakviewer-cli <command-group> --help' for more information.");

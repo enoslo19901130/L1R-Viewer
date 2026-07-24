@@ -175,17 +175,17 @@ L1R-Viewer/
 
 **任務**
 
-- [ ] 7.1 新增 `L1R.Shared`（或暫放 `Launch-L1R-Viewer.ps1` + 小 C# 函式庫）實作：
+- [x] 7.1 新增 `L1R.Shared`（或暫放 `Launch-L1R-Viewer.ps1` + 小 C# 函式庫）實作：
   - `ClientPathValidator.Validate(path)` → `{ ok, missing[], hints[] }`
   - 檢查：`map\` 目錄、至少一個 `*.idx`（建議 `Tile.idx`）、可選 `sprite*.idx`
-- [ ] 7.2 實作 settings.json 讀寫（見 §3.1），最近 8 筆 client
-- [ ] 7.3 統一錯誤訊息格式（GUI MessageBox + CLI stderr）：
+- [x] 7.2 實作 settings.json 讀寫（見 §3.1），最近 8 筆 client
+- [x] 7.3 統一錯誤訊息格式（GUI MessageBox + CLI stderr）：
   - `錯誤：…`  
   - `原因：…`  
   - `建議：…`
-- [ ] 7.4 新增 `docs/GETTING-STARTED.md`（圖文步驟，繁中）
-- [ ] 7.5 `l1r.ps1 doctor` 或 `pakviewer-cli doctor <client>`：印健康檢查 JSON/文字
-- [ ] 7.6 MCP 新增唯讀工具 `validate_client(client_path)`（對齊 doctor）
+- [x] 7.4 新增 `docs/GETTING-STARTED.md`（圖文步驟，繁中）
+- [x] 7.5 `l1r.ps1 doctor` 或 `pakviewer-cli doctor <client>`：印健康檢查 JSON/文字
+- [x] 7.6 MCP 新增唯讀工具 `validate_client(client_path)`（對齊 doctor）
 
 **交付物**：Shared/validator、settings、GETTING-STARTED、doctor、MCP validate_client  
 

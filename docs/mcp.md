@@ -16,6 +16,7 @@ python .\mcp\smoke_test.py --map-id 53 --id 167
 | Tool | Purpose |
 |---|---|
 | `l1r_health` | Backend readiness |
+| `validate_client` | Client folder health (aligns with CLI `doctor --json`) |
 | `sprite_info` | SPX/SPR variants + frame metadata |
 | `search_sprite_entries` | Search sprite*.idx names |
 | `export_sprite_frames` | Export PNG frames |
