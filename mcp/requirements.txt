@@ -1,0 +1,3 @@
+mcp>=1.0.0
+# optional: contact-sheet stitching
+Pillow>=10.0.0

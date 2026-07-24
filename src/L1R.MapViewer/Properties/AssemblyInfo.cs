@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // 組件的一般資訊是由下列的屬性集控制。
 // 變更這些屬性的值即可修改組件的相關
 // 資訊。
-[assembly: AssemblyTitle("L1MapViewer")]
-[assembly: AssemblyDescription("Lineage Map Viewer Tool")]
+[assembly: AssemblyTitle("L1R-Viewer MapViewer")]
+[assembly: AssemblyDescription("L1R-Viewer map viewer and S32 tooling")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("L1MapViewer")]
-[assembly: AssemblyCopyright("Copyright © 2025")]
+[assembly: AssemblyProduct("L1R-Viewer")]
+[assembly: AssemblyCopyright("Copyright © 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

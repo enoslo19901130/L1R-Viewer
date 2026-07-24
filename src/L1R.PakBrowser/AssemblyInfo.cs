@@ -3,10 +3,10 @@ using System.Resources;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("PackViewer")]
-[assembly: AssemblyCopyright("Copyright © Moore 2008")]
-[assembly: AssemblyTitle("PakViewer")]
-[assembly: AssemblyDescription("Lineage 1 Pack File Viewer")]
+[assembly: AssemblyProduct("L1R-Viewer")]
+[assembly: AssemblyCopyright("Copyright © 2026")]
+[assembly: AssemblyTitle("L1R-Viewer PakBrowser")]
+[assembly: AssemblyDescription("L1R-Viewer pack/sprite/tile browser")]
 [assembly: AssemblyConfiguration("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("426ae39d-9b44-4f46-b0a2-6051251a5341")]
