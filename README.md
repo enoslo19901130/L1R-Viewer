@@ -83,3 +83,17 @@ mcp/  docs/  l1r.ps1  Launch-L1R-Viewer.ps1  tests/
 - Offline static assets only  
 - Do not rename `Lin.Helper.Core` namespaces  
 - Read-first; write opt-in only  
+
+## 致謝 Credits
+
+本專案整合並受惠於下列優秀開源／工具工作，特此感謝原作者：
+
+| 工具 | 說明 |
+|---|---|
+| **PakViewer** | 封存 / 圖素 / 精靈瀏覽與 `Lin.Helper.Core` 解碼引擎 |
+| **L1MapViewer** | 地圖檢視、S32 解析與匯出 |
+
+**作者：** [Tony1223](https://github.com/tony1223)（**Flyworld**）  
+**GitHub：** https://github.com/tony1223  
+
+L1R-Viewer 在其成果之上做整併、唯讀預設、CLI / MCP / Shell 操作面，並保留引擎命名空間 `Lin.Helper.Core` 以尊重既有生態。若你也使用本工具，請一併向原作者致意。  
