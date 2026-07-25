@@ -45,16 +45,31 @@ dotnet build L1R-Viewer.slnx -c Release
 | PakBrowser | `L1R-PakBrowser.exe` |
 | CLI | `pakviewer-cli.exe`（`l1r.ps1` 包裝） |
 
-## CLI / MCP
+## MCP + Skill
+
+| 項目 | 位置 |
+|---|---|
+| MCP server 名 | **`l1r-viewer`**（`mcp/server.py`） |
+| Grok 全域 | `~/.grok/config.toml` → `[mcp_servers.l1r-viewer]` |
+| 專案 | `.mcp.json` · `.grok/config.toml` |
+| Skill | **`/l1r-viewer`** · `.grok/skills/l1r-viewer/SKILL.md` |
+
+```powershell
+# 先建置後端，再開 MCP
+dotnet build L1R-Viewer.slnx -c Release
+python -m pip install -r mcp\requirements.txt
+python .\mcp\smoke_test.py --map-id 53 --id 167
+```
+
+MCP **唯讀**（含 `validate_client`）。寫入需 `--enable-edit`，**不上 MCP**。詳見 `docs/mcp.md`。
+
+## CLI
 
 ```powershell
 .\l1r.ps1 map render  <client>\map\53  .\tests\out\m.png
 .\l1r.ps1 map portals <s32> .\tests\out\p.json
 pakviewer-cli map regions <client>\map\53 --json
-python .\mcp\smoke_test.py --map-id 53 --id 167
 ```
-
-MCP **唯讀**（含 `validate_client`）。寫入需 `--enable-edit`，不上 MCP。
 
 ## Layout
 
