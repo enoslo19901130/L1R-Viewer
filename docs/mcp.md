@@ -3,17 +3,19 @@
 Server name: **`l1r-viewer`**  
 Entry: `mcp/server.py`  
 
-## Registration
+> **跨 AI（Grok / Claude / Codex）完整設定與對話範例：**  
+> **[`docs/AI-INTEGRATION.md`](AI-INTEGRATION.md)**
 
-| Place | Path |
-|---|---|
-| Project (Claude/Grok compat) | `L1R-Viewer/.mcp.json` |
-| Grok user | `~/.grok/config.toml` → `[mcp_servers.l1r-viewer]` |
-| Grok project | `L1R-Viewer/.grok/config.toml` |
-| Skill (workflow) | `/l1r-viewer` · `.grok/skills/l1r-viewer/SKILL.md` |
+## Registration（摘要）
+
+| AI | MCP 設定位置 | Skill / 提示 |
+|---|---|---|
+| **Grok** | `~/.grok/config.toml` · 專案 `.mcp.json` | `/l1r-viewer` |
+| **Claude Code** | `.mcp.json` · `~/.claude.json` | `.claude/skills/l1r-viewer` |
+| **Codex** | `~/.codex/config.toml` | 貼 `docs/ai-snippets/CODEX-AGENTS-snippet.md` |
 
 ```toml
-# ~/.grok/config.toml excerpt
+# Grok / Codex 風格
 [mcp_servers.l1r-viewer]
 command = 'C:\Users\EnosLo\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe'
 args = [
@@ -24,7 +26,7 @@ startup_timeout_sec = 60
 tool_timeout_sec = 600
 ```
 
-Restart Grok (or reload MCP) after config change. Requires: `pip install mcp` (+ Pillow optional).
+改設定後重開對應 AI。需要：`pip install mcp`（Pillow 可選）。
 
 ## Install / run smoke
 

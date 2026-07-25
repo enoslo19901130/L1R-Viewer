@@ -45,23 +45,23 @@ dotnet build L1R-Viewer.slnx -c Release
 | PakBrowser | `L1R-PakBrowser.exe` |
 | CLI | `pakviewer-cli.exe`（`l1r.ps1` 包裝） |
 
-## MCP + Skill
+## MCP + Skill（Grok / Claude / Codex）
 
 | 項目 | 位置 |
 |---|---|
-| MCP server 名 | **`l1r-viewer`**（`mcp/server.py`） |
-| Grok 全域 | `~/.grok/config.toml` → `[mcp_servers.l1r-viewer]` |
-| 專案 | `.mcp.json` · `.grok/config.toml` |
-| Skill | **`/l1r-viewer`** · `.grok/skills/l1r-viewer/SKILL.md` |
+| MCP server | **`l1r-viewer`**（`mcp/server.py`） |
+| **跨 AI 設定與用法** | **[`docs/AI-INTEGRATION.md`](docs/AI-INTEGRATION.md)** ← 建議先看 |
+| Grok | `~/.grok/config.toml` · skill `/l1r-viewer` |
+| Claude Code | `.mcp.json` · `.claude/skills/l1r-viewer` · `~/.claude.json` |
+| Codex | `~/.codex/config.toml` · 提示詞 `docs/ai-snippets/CODEX-AGENTS-snippet.md` |
 
 ```powershell
-# 先建置後端，再開 MCP
 dotnet build L1R-Viewer.slnx -c Release
 python -m pip install -r mcp\requirements.txt
 python .\mcp\smoke_test.py --map-id 53 --id 167
 ```
 
-MCP **唯讀**（含 `validate_client`）。寫入需 `--enable-edit`，**不上 MCP**。詳見 `docs/mcp.md`。
+MCP **唯讀**。對話範例與故障排除見 `docs/AI-INTEGRATION.md`。
 
 ## CLI
 
