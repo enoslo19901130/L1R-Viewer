@@ -2,12 +2,36 @@
 
 Server name: **`l1r-viewer`**  
 Entry: `mcp/server.py`  
-Config sample: `.mcp.json`
+
+## Registration
+
+| Place | Path |
+|---|---|
+| Project (Claude/Grok compat) | `L1R-Viewer/.mcp.json` |
+| Grok user | `~/.grok/config.toml` → `[mcp_servers.l1r-viewer]` |
+| Grok project | `L1R-Viewer/.grok/config.toml` |
+| Skill (workflow) | `/l1r-viewer` · `.grok/skills/l1r-viewer/SKILL.md` |
+
+```toml
+# ~/.grok/config.toml excerpt
+[mcp_servers.l1r-viewer]
+command = 'C:\Users\EnosLo\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe'
+args = [
+  'C:\Users\EnosLo\Desktop\00-Workspace\000-Ongoing-Projects\006-Tools\L1R-Viewer\mcp\server.py',
+]
+enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 600
+```
+
+Restart Grok (or reload MCP) after config change. Requires: `pip install mcp` (+ Pillow optional).
 
 ## Install / run smoke
 
 ```powershell
-# requires: pip install mcp  (and Pillow optional for contact sheets)
+cd …\L1R-Viewer
+dotnet build L1R-Viewer.slnx -c Release
+python -m pip install -r mcp\requirements.txt
 python .\mcp\smoke_test.py --map-id 53 --id 167
 ```
 

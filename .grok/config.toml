@@ -1,0 +1,9 @@
+# Project MCP (merged with user config; name collision: user wins)
+[mcp_servers.l1r-viewer]
+command = 'C:\Users\EnosLo\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe'
+args = [
+  'C:\Users\EnosLo\Desktop\00-Workspace\000-Ongoing-Projects\006-Tools\L1R-Viewer\mcp\server.py',
+]
+enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 600

@@ -27,18 +27,22 @@ _CLI_CANDIDATES = [
     ROOT / "src" / "L1R.Cli" / "bin" / "Debug" / "net10.0" / "pakviewer-cli.exe",
 ]
 _MAP_CANDIDATES = [
+    ROOT / "src" / "L1R.MapViewer" / "bin" / "Release" / "net10.0-windows" / "L1R-MapViewer.exe",
+    ROOT / "src" / "L1R.MapViewer" / "bin" / "Debug" / "net10.0-windows" / "L1R-MapViewer.exe",
     ROOT / "src" / "L1R.MapViewer" / "bin" / "Release" / "net10.0-windows" / "L1MapViewerCore.exe",
     ROOT / "src" / "L1R.MapViewer" / "bin" / "Debug" / "net10.0-windows" / "L1MapViewerCore.exe",
-    ROOT / "src" / "L1R.MapViewer" / "bin" / "Release" / "net10.0" / "L1MapViewerCore.exe",
+    ROOT / "src" / "L1R.MapViewer" / "bin" / "Release" / "net10.0" / "L1R-MapViewer.exe",
 ]
 
 mcp = FastMCP(
     "l1r-viewer",
     instructions=(
-        "Read-only access to Lineage Remastered client assets via L1R-Viewer. "
-        "Use absolute client and output paths. Tools: map_info, render_map, "
-        "list_portals, export_passability, list_regions, list_maps, sprite_*, l1r_health. "
-        "No write/edit operations are available through MCP."
+        "Read-only access to Lineage Remastered offline client assets via L1R-Viewer. "
+        "Always use absolute client_path and output paths. "
+        "Tools: l1r_health, validate_client, map_info, render_map, list_portals, "
+        "export_passability, list_regions, list_maps, sprite_info, search_sprite_entries, "
+        "export_sprite_frames, create_sprite_sheet, create_sprite_range_sheet. "
+        "Never attempt write/edit (fix/import/delete) through MCP — not exposed."
     ),
 )
 
